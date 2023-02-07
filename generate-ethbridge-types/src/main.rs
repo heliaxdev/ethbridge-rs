@@ -45,7 +45,7 @@ struct Args {
 
     /// The version of the generated crates. If not specified, the
     /// default value of `0.1.0` is used
-    #[arg(long)]
+    #[arg(short = 'v', long)]
     crate_version: Option<String>,
 }
 
@@ -75,7 +75,7 @@ fn run() -> eyre::Result<()> {
     generate_crate("Bridge", &paths, &mut structs)?;
     generate_crate("Governance", &paths, &mut structs)?;
 
-    println!("ABI structs: {:#?}", structs);
+    println!("ABI structs: {structs:#?}");
     Ok(())
 }
 
