@@ -6,7 +6,7 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// The path to the directory to parse ABI files from
-    #[arg(short = 'p', long, default_value_t = String::from("abi"))]
+    #[arg(short = 'p', long, default_value_t = String::from("target/abi"))]
     abi_files_dir: String,
 
     /// The git tag of `ethereum-bridge` whose artifacts
