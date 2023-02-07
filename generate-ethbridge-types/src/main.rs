@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use clap::Parser;
 use ethers_contract::Abigen;
 use eyre::WrapErr;
+use proc_macro2::TokenTree;
 
 // TODO: dedup types strat:
 // - state machine look for: `pub`, `struct`, `$IDENT`
@@ -12,7 +14,6 @@ use eyre::WrapErr;
 // then:
 // - modify imports of other crates to reference the common
 // crate
-
 struct Paths {
     /// Path to the output directory of the generated crates.
     output_dir: PathBuf,
@@ -64,12 +65,21 @@ fn run() -> eyre::Result<()> {
         download_abi_files(tag, &paths)?;
     }
 
-    generate_crate("Bridge", &paths)
+    let mut structs = HashMap::new();
+    generate_crate("Bridge", &paths, &mut structs)?;
+    generate_crate("Governance", &paths, &mut structs)?;
+
+    println!("ABI structs: {:#?}", structs);
+    Ok(())
 }
 
 // TODO: generate one crate per contract
 // TODO: common crate with all shared types (e.g. Signature)
-fn generate_crate(abi_file: &str, paths: &Paths) -> eyre::Result<()> {
+fn generate_crate(
+    abi_file: &str,
+    paths: &Paths,
+    structs: &mut HashMap<String, Vec<TokenTree>>,
+) -> eyre::Result<()> {
     let abi_file_path = {
         let mut path = paths.abi_files_dir.clone();
         path.push(format!("{abi_file}.abi"));
@@ -85,7 +95,27 @@ fn generate_crate(abi_file: &str, paths: &Paths) -> eyre::Result<()> {
     let abi_gen = Abigen::from_file(&abi_file_path)
         .with_context(|| format!("file not found: {}", abi_file_path.display()))?;
     let (abi, _abi_ctx) = abi_gen.expand()?;
-    println!("ABI structs: {:#?}", abi.abi_structs);
+    let mut structs_iter = abi.abi_structs.into_iter();
+    loop {
+        let Some(tt) = structs_iter.next() else {
+            break;
+        };
+        let mut tts = vec![tt];
+        for _ in 0..5 {
+            tts.push(structs_iter.next().expect("should have token trees"));
+        }
+        let Some(TokenTree::Ident(ident)) = structs_iter.next() else {
+            panic!("should be identifier");
+        };
+        let key = ident.to_string();
+        tts.push(TokenTree::Ident(ident));
+        tts.push(
+            structs_iter
+                .next()
+                .expect("should have token tree (struct def)"),
+        );
+        structs.insert(key, tts);
+    }
     Ok(())
 }
 
