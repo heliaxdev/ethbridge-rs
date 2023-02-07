@@ -32,7 +32,7 @@ struct Args {
     ethereum_bridge_tag: Option<String>,
 
     /// Path to the output directory of the generated crates.
-    /// If not output directory is specified, the current working
+    /// If no output directory is specified, the current working
     /// directory is used instead
     #[arg(short = 'o', long)]
     output_dir: Option<String>,
