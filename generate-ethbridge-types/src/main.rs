@@ -42,6 +42,11 @@ struct Args {
     /// directory is used instead
     #[arg(short = 'o', long)]
     output_dir: Option<String>,
+
+    /// The version of the generated crates. If not specified, the
+    /// default value of `0.1.0` is used
+    #[arg(long)]
+    crate_version: Option<String>,
 }
 
 fn main() {
@@ -55,6 +60,7 @@ fn run() -> eyre::Result<()> {
         output_dir,
         abi_files_dir,
         ethereum_bridge_tag,
+        ..
     } = Args::parse();
 
     let paths = Paths {
