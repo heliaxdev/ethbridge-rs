@@ -134,7 +134,7 @@ fn generate_crate_template(
         .join("\n");
     let crate_path = paths.output_dir.join(&crate_name);
     let cargo_toml_path = crate_path.join("Cargo.toml");
-    std::fs::create_dir_all(&crate_path)
+    std::fs::create_dir_all(crate_path.join("src"))
         .with_context(|| format!("failed to create directory: {}", crate_path.display()))?;
     let err = std::fs::write(
         &cargo_toml_path,
@@ -153,7 +153,7 @@ edition = \"2021\"
 }
 
 fn get_crate(abi_file: &str, suffix: &str) -> String {
-    format!("{}_{suffix}", abi_file.to_lowercase())
+    format!("{}-{suffix}", abi_file.to_lowercase())
 }
 
 fn download_abi_files(_tag: String, _paths: &Paths) -> eyre::Result<()> {
