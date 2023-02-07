@@ -1,0 +1,8 @@
+[package]
+name = "generate-ethbridge-types"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.1.4", features = ["derive"] }
+ethers-contract = { version = "1.0.2", features = ["abigen"] }
