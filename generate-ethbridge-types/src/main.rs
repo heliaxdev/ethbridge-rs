@@ -38,7 +38,7 @@ struct Args {
     output_dir: Option<String>,
 
     /// The version of the generated crates. If not specified, the
-    /// default value of `0.1.0` is used
+    /// version of this CLI command is used instead
     #[arg(short = 'v', long)]
     crate_version: Option<String>,
 }
@@ -57,7 +57,7 @@ fn run() -> eyre::Result<()> {
         crate_version,
     } = Args::parse();
 
-    let crate_version = crate_version.unwrap_or_else(|| "0.1.0".into());
+    let crate_version = crate_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").into());
     let paths = Paths {
         output_dir: output_dir.map(|s| s.into()).unwrap_or_else(PathBuf::new),
         abi_files_dir: abi_files_dir.into(),
