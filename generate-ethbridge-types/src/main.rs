@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use ethers_contract::Abigen;
 use eyre::{eyre as err, WrapErr};
+use itertools::Itertools;
 use proc_macro2::TokenTree;
 
 // TODO: dedup types strat:
@@ -60,9 +61,10 @@ fn run() -> eyre::Result<()> {
         output_dir,
         abi_files_dir,
         ethereum_bridge_tag,
-        ..
+        crate_version,
     } = Args::parse();
 
+    let crate_version = crate_version.unwrap_or_else(|| "0.1.0".into());
     let paths = Paths {
         output_dir: output_dir.map(|s| s.into()).unwrap_or_else(PathBuf::new),
         abi_files_dir: abi_files_dir.into(),
@@ -72,8 +74,8 @@ fn run() -> eyre::Result<()> {
     }
 
     let mut structs = BTreeMap::new();
-    generate_crates("Bridge", &paths, &mut structs)?;
-    generate_crates("Governance", &paths, &mut structs)?;
+    generate_crates("Bridge", &crate_version, &paths, &mut structs)?;
+    generate_crates("Governance", &crate_version, &paths, &mut structs)?;
 
     println!("ABI structs: {structs:#?}");
     Ok(())
@@ -83,19 +85,11 @@ fn run() -> eyre::Result<()> {
 // TODO: common crate with all shared types (e.g. Signature)
 fn generate_crates(
     abi_file: &str,
+    version: &str,
     paths: &Paths,
     structs: &mut BTreeMap<String, Vec<TokenTree>>,
 ) -> eyre::Result<()> {
-    let abi_file_path = {
-        let mut path = paths.abi_files_dir.clone();
-        path.push(format!("{abi_file}.abi"));
-        path
-    };
-    let output_dir = {
-        let mut path = paths.output_dir.clone();
-        path.push(abi_file.to_lowercase());
-        path
-    };
+    let abi_file_path = paths.abi_files_dir.join(format!("{abi_file}.abi"));
     let abi_gen = Abigen::from_file(&abi_file_path)
         .with_context(|| format!("file not found: {}", abi_file_path.display()))?;
     let (abi, _) = abi_gen.expand()?;
@@ -124,7 +118,42 @@ fn generate_crates(
         );
         structs.insert(key, tts);
     }
+    generate_crate_template(get_crate(abi_file, "structs"), version, vec![], paths)?;
     Ok(())
+}
+
+fn generate_crate_template(
+    crate_name: String,
+    crate_version: &str,
+    deps: Vec<(String, String)>,
+    paths: &Paths,
+) -> eyre::Result<()> {
+    let deps = deps
+        .into_iter()
+        .map(|(dep, ver)| format!("{dep} = \"{ver}\""))
+        .join("\n");
+    let crate_path = paths.output_dir.join(&crate_name);
+    let cargo_toml_path = crate_path.join("Cargo.toml");
+    std::fs::create_dir_all(&crate_path)
+        .with_context(|| format!("failed to create directory: {}", crate_path.display()))?;
+    let err = std::fs::write(
+        &cargo_toml_path,
+        format!(
+            "\
+[package]
+name = \"{crate_name}\"
+version = \"{crate_version}\"
+edition = \"2021\"
+
+[dependencies]
+{deps}"
+        ),
+    );
+    err.with_context(|| format!("failed to create file: {}", cargo_toml_path.display()))
+}
+
+fn get_crate(abi_file: &str, suffix: &str) -> String {
+    format!("{}_{suffix}", abi_file.to_lowercase())
 }
 
 fn download_abi_files(_tag: String, _paths: &Paths) -> eyre::Result<()> {
