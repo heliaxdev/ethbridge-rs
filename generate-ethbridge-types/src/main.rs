@@ -18,6 +18,10 @@ struct Args {
     /// directory
     #[arg(short = 't', long)]
     ethereum_bridge_tag: Option<String>,
+
+    /// The root directory where we output the generated crates into
+    #[arg(short = 'o', long, default_value_t = String::from("."))]
+    root: String,
 }
 
 fn main() {
@@ -28,10 +32,12 @@ fn main() {
 
 fn run() -> eyre::Result<()> {
     let Args {
+        root,
         abi_files_dir,
         ethereum_bridge_tag,
     } = Args::parse();
 
+    let root_dir: PathBuf = root.into();
     let abi_files_dir: PathBuf = abi_files_dir.into();
     if let Some(_tag) = ethereum_bridge_tag {
         // TODO: download ABI files
@@ -39,6 +45,7 @@ fn run() -> eyre::Result<()> {
     }
 
     println!("{abi_files_dir:#?}");
+    println!("{root_dir:#?}");
     Ok(())
 }
 
