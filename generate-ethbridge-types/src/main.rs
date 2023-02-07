@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -71,7 +71,7 @@ fn run() -> eyre::Result<()> {
         download_abi_files(tag, &paths)?;
     }
 
-    let mut structs = HashMap::new();
+    let mut structs = BTreeMap::new();
     generate_crate("Bridge", &paths, &mut structs)?;
     generate_crate("Governance", &paths, &mut structs)?;
 
@@ -84,7 +84,7 @@ fn run() -> eyre::Result<()> {
 fn generate_crate(
     abi_file: &str,
     paths: &Paths,
-    structs: &mut HashMap<String, Vec<TokenTree>>,
+    structs: &mut BTreeMap<String, Vec<TokenTree>>,
 ) -> eyre::Result<()> {
     let abi_file_path = {
         let mut path = paths.abi_files_dir.clone();
