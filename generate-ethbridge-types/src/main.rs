@@ -71,7 +71,12 @@ fn run() -> eyre::Result<()> {
     generate_crates("Bridge", &crate_version, &paths, &mut structs)?;
     generate_crates("Governance", &crate_version, &paths, &mut structs)?;
 
-    generate_crate_template("ethbridge-structs".into(), &crate_version, vec![], &paths)?;
+    generate_crate_template(
+        "ethbridge-structs".into(),
+        &crate_version,
+        vec![("ethers".into(), "1.0.2".into())],
+        &paths,
+    )?;
     generate_crate_source(
         "ethbridge-structs".into(),
         &paths,
@@ -149,7 +154,8 @@ version = \"{crate_version}\"
 edition = \"2021\"
 
 [dependencies]
-{deps}"
+{deps}
+"
         ),
     );
     err.with_context(|| format!("failed to create file: {}", cargo_toml_path.display()))
