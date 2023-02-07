@@ -1,7 +1,24 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-//use ethers_contract::Abigen;
+use ethers_contract::Abigen;
+use eyre::WrapErr;
+
+// TODO: dedup types strat:
+// - state machine look for: `pub`, `struct`, `$IDENT`
+// - if `$IDENT` is in set, then output it;
+// - otherwise do not output this type
+//
+// then:
+// - modify imports of other crates to reference the common
+// crate
+
+struct Paths {
+    /// Path to the output directory of the generated crates.
+    output_dir: PathBuf,
+    /// Path to the ABI files directory.
+    abi_files_dir: PathBuf,
+}
 
 /// Generate Ethereum bridge Rust types compatible with Namada's
 /// Rust code
@@ -19,9 +36,11 @@ struct Args {
     #[arg(short = 't', long)]
     ethereum_bridge_tag: Option<String>,
 
-    /// The root directory where we output the generated crates into
-    #[arg(short = 'o', long, default_value_t = String::from("."))]
-    root: String,
+    /// Path to the output directory of the generated crates.
+    /// If not output directory is specified, the current working
+    /// directory is used instead
+    #[arg(short = 'o', long)]
+    output_dir: Option<String>,
 }
 
 fn main() {
@@ -32,21 +51,44 @@ fn main() {
 
 fn run() -> eyre::Result<()> {
     let Args {
-        root,
+        output_dir,
         abi_files_dir,
         ethereum_bridge_tag,
     } = Args::parse();
 
-    let root_dir: PathBuf = root.into();
-    let abi_files_dir: PathBuf = abi_files_dir.into();
-    if let Some(_tag) = ethereum_bridge_tag {
-        // TODO: download ABI files
-        eyre::bail!("downloading of ABI artifacts is not implemented yet");
+    let paths = Paths {
+        output_dir: output_dir.map(|s| s.into()).unwrap_or_else(PathBuf::new),
+        abi_files_dir: abi_files_dir.into(),
+    };
+    if let Some(tag) = ethereum_bridge_tag {
+        download_abi_files(tag, &paths)?;
     }
 
-    println!("{abi_files_dir:#?}");
-    println!("{root_dir:#?}");
+    generate_crate("Bridge", &paths)
+}
+
+// TODO: generate one crate per contract
+// TODO: common crate with all shared types (e.g. Signature)
+fn generate_crate(abi_file: &str, paths: &Paths) -> eyre::Result<()> {
+    let abi_file_path = {
+        let mut path = paths.abi_files_dir.clone();
+        path.push(format!("{abi_file}.abi"));
+        path
+    };
+    let output_dir = {
+        let mut path = paths.output_dir.clone();
+        path.push(abi_file.to_lowercase());
+        path
+    };
+    println!("Output: {output_dir:#?}");
+    println!("Path: {abi_file_path:#?}");
+    let abi_gen = Abigen::from_file(&abi_file_path)
+        .with_context(|| format!("file not found: {}", abi_file_path.display()))?;
+    let (abi, _abi_ctx) = abi_gen.expand()?;
+    println!("ABI structs: {:#?}", abi.abi_structs);
     Ok(())
 }
 
-//fn generate_crate(krate: &str, abi_files_dir: &PathBuf) ->
+fn download_abi_files(_tag: String, _paths: &Paths) -> eyre::Result<()> {
+    eyre::bail!("downloading of ABI artifacts is not implemented yet")
+}
