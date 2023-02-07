@@ -5,16 +5,9 @@ use clap::Parser;
 use ethers_contract::Abigen;
 use eyre::{eyre as err, WrapErr};
 use itertools::Itertools;
-use proc_macro2::TokenTree;
+use proc_macro2::{TokenStream, TokenTree};
+use quote::quote;
 
-// TODO: dedup types strat:
-// - state machine look for: `pub`, `struct`, `$IDENT`
-// - if `$IDENT` is in set, then output it;
-// - otherwise do not output this type
-//
-// then:
-// - modify imports of other crates to reference the common
-// crate
 struct Paths {
     /// Path to the output directory of the generated crates.
     output_dir: PathBuf,
@@ -74,20 +67,28 @@ fn run() -> eyre::Result<()> {
     }
 
     let mut structs = BTreeMap::new();
+
     generate_crates("Bridge", &crate_version, &paths, &mut structs)?;
     generate_crates("Governance", &crate_version, &paths, &mut structs)?;
 
-    println!("ABI structs: {structs:#?}");
+    generate_crate_template("ethbridge-structs".into(), &crate_version, vec![], &paths)?;
+    generate_crate_source(
+        "ethbridge-structs".into(),
+        &paths,
+        std::iter::once(quote! {
+            #![allow(dead_code)]
+        })
+        .chain(structs.into_values().flatten()),
+    )?;
+
     Ok(())
 }
 
-// TODO: generate one crate per contract
-// TODO: common crate with all shared types (e.g. Signature)
 fn generate_crates(
     abi_file: &str,
     version: &str,
     paths: &Paths,
-    structs: &mut BTreeMap<String, Vec<TokenTree>>,
+    structs: &mut BTreeMap<String, Vec<TokenStream>>,
 ) -> eyre::Result<()> {
     let abi_file_path = paths.abi_files_dir.join(format!("{abi_file}.abi"));
     let abi_gen = Abigen::from_file(&abi_file_path)
@@ -98,27 +99,29 @@ fn generate_crates(
         let Some(tt) = structs_iter.next() else {
             break;
         };
-        let mut tts = vec![tt];
+        let mut tts = vec![tt.into()];
         for _ in 0..5 {
             tts.push(
                 structs_iter
                     .next()
-                    .ok_or_else(|| err!("insufficient token trees in generated rust code"))?,
+                    .ok_or_else(|| err!("insufficient token trees in generated rust code"))?
+                    .into(),
             );
         }
         let Some(TokenTree::Ident(ident)) = structs_iter.next() else {
             eyre::bail!("expected identifier in generated rust code, but got something else");
         };
         let key = ident.to_string();
-        tts.push(TokenTree::Ident(ident));
+        tts.push(TokenTree::Ident(ident).into());
         tts.push(
             structs_iter
                 .next()
-                .ok_or_else(|| err!("struct definition not found in generated rust code"))?,
+                .ok_or_else(|| err!("struct definition not found in generated rust code"))?
+                .into(),
         );
         structs.insert(key, tts);
     }
-    generate_crate_template(get_crate(abi_file, "structs"), version, vec![], paths)?;
+    //generate_crate_template(get_subcrate(abi_file, "structs"), version, vec![], paths)?;
     Ok(())
 }
 
@@ -152,8 +155,29 @@ edition = \"2021\"
     err.with_context(|| format!("failed to create file: {}", cargo_toml_path.display()))
 }
 
-fn get_crate(abi_file: &str, suffix: &str) -> String {
-    format!("{}-{suffix}", abi_file.to_lowercase())
+fn generate_crate_source(
+    crate_name: String,
+    paths: &Paths,
+    source: impl IntoIterator<Item = TokenStream>,
+) -> eyre::Result<()> {
+    let lib_path = paths
+        .output_dir
+        .join(&crate_name)
+        .join("src")
+        .join("lib.rs");
+    let source = source
+        .into_iter()
+        .fold(TokenStream::new(), |mut stream, other| {
+            stream.extend(other);
+            stream
+        })
+        .to_string();
+    std::fs::write(&lib_path, source)
+        .with_context(|| format!("failed to create file: {}", lib_path.display()))
+}
+
+fn get_subcrate(abi_file: &str, suffix: &str) -> String {
+    format!("ethbridge-{}-{suffix}", abi_file.to_lowercase())
 }
 
 fn download_abi_files(_tag: String, _paths: &Paths) -> eyre::Result<()> {
