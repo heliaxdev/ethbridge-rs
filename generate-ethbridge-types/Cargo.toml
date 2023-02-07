@@ -7,4 +7,6 @@ edition = "2021"
 clap = { version = "4.1.4", features = ["derive"] }
 ethers-contract = { version = "1.0.2", features = ["abigen"] }
 eyre = "0.6.8"
+itertools = "0.10.5"
 proc-macro2 = "1.0.51"
+quote = "1.0.23"
