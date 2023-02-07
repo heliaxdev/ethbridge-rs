@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use ethers_contract::Abigen;
-use eyre::WrapErr;
+use eyre::{eyre as err, WrapErr};
 use proc_macro2::TokenTree;
 
 // TODO: dedup types strat:
@@ -72,8 +72,8 @@ fn run() -> eyre::Result<()> {
     }
 
     let mut structs = BTreeMap::new();
-    generate_crate("Bridge", &paths, &mut structs)?;
-    generate_crate("Governance", &paths, &mut structs)?;
+    generate_crates("Bridge", &paths, &mut structs)?;
+    generate_crates("Governance", &paths, &mut structs)?;
 
     println!("ABI structs: {structs:#?}");
     Ok(())
@@ -81,7 +81,7 @@ fn run() -> eyre::Result<()> {
 
 // TODO: generate one crate per contract
 // TODO: common crate with all shared types (e.g. Signature)
-fn generate_crate(
+fn generate_crates(
     abi_file: &str,
     paths: &Paths,
     structs: &mut BTreeMap<String, Vec<TokenTree>>,
@@ -96,11 +96,9 @@ fn generate_crate(
         path.push(abi_file.to_lowercase());
         path
     };
-    println!("Output: {output_dir:#?}");
-    println!("Path: {abi_file_path:#?}");
     let abi_gen = Abigen::from_file(&abi_file_path)
         .with_context(|| format!("file not found: {}", abi_file_path.display()))?;
-    let (abi, _abi_ctx) = abi_gen.expand()?;
+    let (abi, _) = abi_gen.expand()?;
     let mut structs_iter = abi.abi_structs.into_iter();
     loop {
         let Some(tt) = structs_iter.next() else {
@@ -108,17 +106,21 @@ fn generate_crate(
         };
         let mut tts = vec![tt];
         for _ in 0..5 {
-            tts.push(structs_iter.next().expect("should have token trees"));
+            tts.push(
+                structs_iter
+                    .next()
+                    .ok_or_else(|| err!("insufficient token trees in generated rust code"))?,
+            );
         }
         let Some(TokenTree::Ident(ident)) = structs_iter.next() else {
-            panic!("should be identifier");
+            eyre::bail!("expected identifier in generated rust code, but got something else");
         };
         let key = ident.to_string();
         tts.push(TokenTree::Ident(ident));
         tts.push(
             structs_iter
                 .next()
-                .expect("should have token tree (struct def)"),
+                .ok_or_else(|| err!("struct definition not found in generated rust code"))?,
         );
         structs.insert(key, tts);
     }
