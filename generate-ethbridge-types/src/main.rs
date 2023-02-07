@@ -1,4 +1,7 @@
+use std::path::PathBuf;
+
 use clap::Parser;
+//use ethers_contract::Abigen;
 
 /// Generate Ethereum bridge Rust types compatible with Namada's
 /// Rust code
@@ -6,7 +9,7 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// The path to the directory to parse ABI files from
-    #[arg(short = 'p', long, default_value_t = String::from("target/abi"))]
+    #[arg(short = 'p', long, default_value_t = String::from("target"))]
     abi_files_dir: String,
 
     /// The git tag of `ethereum-bridge` whose artifacts
@@ -18,6 +21,25 @@ struct Args {
 }
 
 fn main() {
-    let args = Args::parse();
-    println!("Parsed: {args:#?}");
+    if let Err(e) = run() {
+        eprintln!("error: {e}");
+    }
 }
+
+fn run() -> eyre::Result<()> {
+    let Args {
+        abi_files_dir,
+        ethereum_bridge_tag,
+    } = Args::parse();
+
+    let abi_files_dir: PathBuf = abi_files_dir.into();
+    if let Some(_tag) = ethereum_bridge_tag {
+        // TODO: download ABI files
+        eyre::bail!("downloading of ABI artifacts is not implemented yet");
+    }
+
+    println!("{abi_files_dir:#?}");
+    Ok(())
+}
+
+//fn generate_crate(krate: &str, abi_files_dir: &PathBuf) ->
