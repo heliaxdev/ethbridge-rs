@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ethbridge-governance-calls = { path = "../ethbridge-governance-calls" }
 ethbridge-governance-events = { path = "../ethbridge-governance-events" }
 ethbridge-structs = { path = "../ethbridge-structs" }
 ethers = "1.0.2"

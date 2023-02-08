@@ -169,11 +169,6 @@ fn generate_crates(
         vec![
             dispatch_on_abi(
                 abi_file,
-                || ("ethbridge-bridge-calls".into(), String::new()),
-                || ("ethbridge-governance-calls".into(), String::new()),
-            ),
-            dispatch_on_abi(
-                abi_file,
                 || ("ethbridge-bridge-events".into(), String::new()),
                 || ("ethbridge-governance-events".into(), String::new()),
             ),
@@ -196,13 +191,11 @@ fn generate_crates(
                 abi_file,
                 || {
                     quote! {
-                        use ::ethbridge_bridge_calls::*;
                         use ::ethbridge_bridge_events::*;
                     }
                 },
                 || {
                     quote! {
-                        use ::ethbridge_governance_calls::*;
                         use ::ethbridge_governance_events::*;
                     }
                 },
