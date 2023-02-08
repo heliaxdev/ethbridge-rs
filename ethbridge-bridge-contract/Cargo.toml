@@ -1,0 +1,10 @@
+[package]
+name = "ethbridge-bridge-contract"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethbridge-bridge-calls = { path = "../ethbridge-bridge-calls" }
+ethbridge-bridge-events = { path = "../ethbridge-bridge-events" }
+ethbridge-structs = { path = "../ethbridge-structs" }
+ethers = "1.0.2"

@@ -130,7 +130,7 @@ fn generate_crates(
         get_subcrate(abi_file, "calls"),
         version,
         vec![
-            ("ethbridge-structs".into(), version.into()),
+            ("ethbridge-structs".into(), String::new()),
             ("ethers".into(), "1.0.2".into()),
         ],
         paths,
@@ -148,7 +148,7 @@ fn generate_crates(
         get_subcrate(abi_file, "events"),
         version,
         vec![
-            ("ethbridge-structs".into(), version.into()),
+            ("ethbridge-structs".into(), String::new()),
             ("ethers".into(), "1.0.2".into()),
         ],
         paths,
@@ -163,7 +163,68 @@ fn generate_crates(
         })
         .chain(abi.events.into_iter().map(|tt| tt.into())),
     )?;
+    generate_crate_template(
+        get_subcrate(abi_file, "contract"),
+        version,
+        vec![
+            dispatch_on_abi(
+                abi_file,
+                || ("ethbridge-bridge-calls".into(), String::new()),
+                || ("ethbridge-governance-calls".into(), String::new()),
+            ),
+            dispatch_on_abi(
+                abi_file,
+                || ("ethbridge-bridge-events".into(), String::new()),
+                || ("ethbridge-governance-events".into(), String::new()),
+            ),
+            ("ethbridge-structs".into(), String::new()),
+            ("ethers".into(), "1.0.2".into()),
+        ],
+        paths,
+    )?;
+    generate_crate_source(
+        get_subcrate(abi_file, "contract"),
+        paths,
+        std::iter::once(quote! {
+            #![allow(dead_code)]
+            #![allow(unused_imports)]
+            #![allow(clippy::too_many_arguments)]
+            use ::ethbridge_structs::*;
+        })
+        .chain(
+            dispatch_on_abi(
+                abi_file,
+                || {
+                    quote! {
+                        use ::ethbridge_bridge_calls::*;
+                        use ::ethbridge_bridge_events::*;
+                    }
+                },
+                || {
+                    quote! {
+                        use ::ethbridge_governance_calls::*;
+                        use ::ethbridge_governance_events::*;
+                    }
+                },
+            )
+            .into_iter()
+            .map(|tt| tt.into()),
+        )
+        .chain(abi.contract.into_iter().map(|tt| tt.into())),
+    )?;
     Ok(())
+}
+
+fn dispatch_on_abi<T, F1, F2>(abi_file: &str, mut bridge: F1, mut governance: F2) -> T
+where
+    F1: FnMut() -> T,
+    F2: FnMut() -> T,
+{
+    match abi_file {
+        "Bridge" => bridge(),
+        "Governance" => governance(),
+        _ => unreachable!("unknown ABI file type"),
+    }
 }
 
 fn generate_crate_template(
