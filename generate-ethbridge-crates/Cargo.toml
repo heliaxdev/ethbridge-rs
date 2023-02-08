@@ -1,5 +1,5 @@
 [package]
-name = "generate-ethbridge-types"
+name = "generate-ethbridge-crates"
 version = "0.1.0"
 edition = "2021"
 
