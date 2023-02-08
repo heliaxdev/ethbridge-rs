@@ -29,10 +29,10 @@ pub struct InvalidTransferToNamadaFilter {
     Default,
 )]
 #[ethevent(
-    name = "TransferToERC",
-    abi = "TransferToERC(uint256,(address,address,uint256,string,uint256,string)[],string)"
+    name = "TransferToErc",
+    abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],string)"
 )]
-pub struct TransferToERCFilter {
+pub struct TransferToErcFilter {
     #[ethevent(indexed)]
     pub nonce: ethers::core::types::U256,
     pub transfers: ::std::vec::Vec<Erc20Transfer>,
@@ -59,7 +59,7 @@ pub struct TransferToNamadaFilter {
 #[derive(Debug, Clone, PartialEq, Eq, ethers :: contract :: EthAbiType)]
 pub enum BridgeEvents {
     InvalidTransferToNamadaFilter(InvalidTransferToNamadaFilter),
-    TransferToERCFilter(TransferToERCFilter),
+    TransferToErcFilter(TransferToErcFilter),
     TransferToNamadaFilter(TransferToNamadaFilter),
 }
 impl ethers::contract::EthLogDecode for BridgeEvents {
@@ -72,8 +72,8 @@ impl ethers::contract::EthLogDecode for BridgeEvents {
         if let Ok(decoded) = InvalidTransferToNamadaFilter::decode_log(log) {
             return Ok(BridgeEvents::InvalidTransferToNamadaFilter(decoded));
         }
-        if let Ok(decoded) = TransferToERCFilter::decode_log(log) {
-            return Ok(BridgeEvents::TransferToERCFilter(decoded));
+        if let Ok(decoded) = TransferToErcFilter::decode_log(log) {
+            return Ok(BridgeEvents::TransferToErcFilter(decoded));
         }
         if let Ok(decoded) = TransferToNamadaFilter::decode_log(log) {
             return Ok(BridgeEvents::TransferToNamadaFilter(decoded));
@@ -85,7 +85,7 @@ impl ::std::fmt::Display for BridgeEvents {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match self {
             BridgeEvents::InvalidTransferToNamadaFilter(element) => element.fmt(f),
-            BridgeEvents::TransferToERCFilter(element) => element.fmt(f),
+            BridgeEvents::TransferToErcFilter(element) => element.fmt(f),
             BridgeEvents::TransferToNamadaFilter(element) => element.fmt(f),
         }
     }

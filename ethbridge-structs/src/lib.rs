@@ -45,7 +45,7 @@ pub struct NamadaTransfer {
 pub struct RelayProof {
     pub validator_set_args: ValidatorSetArgs,
     pub signatures: ::std::vec::Vec<Signature>,
-    pub transfers: ::std::vec::Vec<ERC20Transfer>,
+    pub transfers: ::std::vec::Vec<Erc20Transfer>,
     pub pool_root: [u8; 32],
     pub proof: Vec<[u8; 32]>,
     pub proof_flags: Vec<bool>,
