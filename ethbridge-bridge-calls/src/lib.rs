@@ -19,45 +19,7 @@ pub struct AuthorizeCall {
     pub signatures: ::std::vec::Vec<Signature>,
     pub message: [u8; 32],
 }
-#[doc = "Container type for all input parameters for the `currentValidatorSetHash` function with signature `currentValidatorSetHash()` and selector `[248, 150, 241, 165]`"]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthCall,
-    ethers :: contract :: EthDisplay,
-    Default,
-)]
-#[ethcall(name = "currentValidatorSetHash", abi = "currentValidatorSetHash()")]
-pub struct CurrentValidatorSetHashCall;
-#[doc = "Container type for all input parameters for the `getWhitelistAmountFor` function with signature `getWhitelistAmountFor(address)` and selector `[98, 162, 89, 159]`"]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthCall,
-    ethers :: contract :: EthDisplay,
-    Default,
-)]
-#[ethcall(name = "getWhitelistAmountFor", abi = "getWhitelistAmountFor(address)")]
-pub struct GetWhitelistAmountForCall {
-    pub token_address: ethers::core::types::Address,
-}
-#[doc = "Container type for all input parameters for the `nextValidatorSetHash` function with signature `nextValidatorSetHash()` and selector `[117, 45, 59, 137]`"]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthCall,
-    ethers :: contract :: EthDisplay,
-    Default,
-)]
-#[ethcall(name = "nextValidatorSetHash", abi = "nextValidatorSetHash()")]
-pub struct NextValidatorSetHashCall;
-#[doc = "Container type for all input parameters for the `transferToERC` function with signature `transferToERC((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string)` and selector `[74, 34, 58, 225]`"]
+#[doc = "Container type for all input parameters for the `transferToERC` function with signature `transferToERC(((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string))` and selector `[186, 244, 119, 12]`"]
 #[derive(
     Clone,
     Debug,
@@ -69,17 +31,10 @@ pub struct NextValidatorSetHashCall;
 )]
 #[ethcall(
     name = "transferToERC",
-    abi = "transferToERC((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string)"
+    abi = "transferToERC(((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string))"
 )]
 pub struct TransferToERCCall {
-    pub validator_set_args: ValidatorSetArgs,
-    pub signatures: ::std::vec::Vec<Signature>,
-    pub transfers: ::std::vec::Vec<Erc20Transfer>,
-    pub pool_root: [u8; 32],
-    pub proof: ::std::vec::Vec<[u8; 32]>,
-    pub proof_flags: ::std::vec::Vec<bool>,
-    pub batch_nonce: ethers::core::types::U256,
-    pub relayer_address: String,
+    pub relay_proof: RelayProof,
 }
 #[doc = "Container type for all input parameters for the `transferToNamada` function with signature `transferToNamada((address,uint256,string)[],uint256)` and selector `[7, 46, 119, 203]`"]
 #[derive(
@@ -96,7 +51,7 @@ pub struct TransferToERCCall {
     abi = "transferToNamada((address,uint256,string)[],uint256)"
 )]
 pub struct TransferToNamadaCall {
-    pub tranfers: ::std::vec::Vec<NamadaTransfer>,
+    pub trasfers: ::std::vec::Vec<NamadaTransfer>,
     pub confirmations: ethers::core::types::U256,
 }
 #[doc = "Container type for all input parameters for the `updateTokenWhitelist` function with signature `updateTokenWhitelist(address[],uint256[])` and selector `[105, 128, 221, 21]`"]
@@ -137,9 +92,6 @@ pub struct UpdateValidatorSetHashCall {
 #[derive(Debug, Clone, PartialEq, Eq, ethers :: contract :: EthAbiType)]
 pub enum BridgeCalls {
     Authorize(AuthorizeCall),
-    CurrentValidatorSetHash(CurrentValidatorSetHashCall),
-    GetWhitelistAmountFor(GetWhitelistAmountForCall),
-    NextValidatorSetHash(NextValidatorSetHashCall),
     TransferToERC(TransferToERCCall),
     TransferToNamada(TransferToNamadaCall),
     UpdateTokenWhitelist(UpdateTokenWhitelistCall),
@@ -150,21 +102,6 @@ impl ethers::core::abi::AbiDecode for BridgeCalls {
         if let Ok(decoded) = <AuthorizeCall as ethers::core::abi::AbiDecode>::decode(data.as_ref())
         {
             return Ok(BridgeCalls::Authorize(decoded));
-        }
-        if let Ok(decoded) =
-            <CurrentValidatorSetHashCall as ethers::core::abi::AbiDecode>::decode(data.as_ref())
-        {
-            return Ok(BridgeCalls::CurrentValidatorSetHash(decoded));
-        }
-        if let Ok(decoded) =
-            <GetWhitelistAmountForCall as ethers::core::abi::AbiDecode>::decode(data.as_ref())
-        {
-            return Ok(BridgeCalls::GetWhitelistAmountFor(decoded));
-        }
-        if let Ok(decoded) =
-            <NextValidatorSetHashCall as ethers::core::abi::AbiDecode>::decode(data.as_ref())
-        {
-            return Ok(BridgeCalls::NextValidatorSetHash(decoded));
         }
         if let Ok(decoded) =
             <TransferToERCCall as ethers::core::abi::AbiDecode>::decode(data.as_ref())
@@ -193,9 +130,6 @@ impl ethers::core::abi::AbiEncode for BridgeCalls {
     fn encode(self) -> Vec<u8> {
         match self {
             BridgeCalls::Authorize(element) => element.encode(),
-            BridgeCalls::CurrentValidatorSetHash(element) => element.encode(),
-            BridgeCalls::GetWhitelistAmountFor(element) => element.encode(),
-            BridgeCalls::NextValidatorSetHash(element) => element.encode(),
             BridgeCalls::TransferToERC(element) => element.encode(),
             BridgeCalls::TransferToNamada(element) => element.encode(),
             BridgeCalls::UpdateTokenWhitelist(element) => element.encode(),
@@ -207,9 +141,6 @@ impl ::std::fmt::Display for BridgeCalls {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match self {
             BridgeCalls::Authorize(element) => element.fmt(f),
-            BridgeCalls::CurrentValidatorSetHash(element) => element.fmt(f),
-            BridgeCalls::GetWhitelistAmountFor(element) => element.fmt(f),
-            BridgeCalls::NextValidatorSetHash(element) => element.fmt(f),
             BridgeCalls::TransferToERC(element) => element.fmt(f),
             BridgeCalls::TransferToNamada(element) => element.fmt(f),
             BridgeCalls::UpdateTokenWhitelist(element) => element.fmt(f),
@@ -220,21 +151,6 @@ impl ::std::fmt::Display for BridgeCalls {
 impl ::std::convert::From<AuthorizeCall> for BridgeCalls {
     fn from(var: AuthorizeCall) -> Self {
         BridgeCalls::Authorize(var)
-    }
-}
-impl ::std::convert::From<CurrentValidatorSetHashCall> for BridgeCalls {
-    fn from(var: CurrentValidatorSetHashCall) -> Self {
-        BridgeCalls::CurrentValidatorSetHash(var)
-    }
-}
-impl ::std::convert::From<GetWhitelistAmountForCall> for BridgeCalls {
-    fn from(var: GetWhitelistAmountForCall) -> Self {
-        BridgeCalls::GetWhitelistAmountFor(var)
-    }
-}
-impl ::std::convert::From<NextValidatorSetHashCall> for BridgeCalls {
-    fn from(var: NextValidatorSetHashCall) -> Self {
-        BridgeCalls::NextValidatorSetHash(var)
     }
 }
 impl ::std::convert::From<TransferToERCCall> for BridgeCalls {
@@ -268,36 +184,3 @@ impl ::std::convert::From<UpdateValidatorSetHashCall> for BridgeCalls {
     Default,
 )]
 pub struct AuthorizeReturn(pub bool);
-#[doc = "Container type for all return fields from the `currentValidatorSetHash` function with signature `currentValidatorSetHash()` and selector `[248, 150, 241, 165]`"]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthAbiType,
-    ethers :: contract :: EthAbiCodec,
-    Default,
-)]
-pub struct CurrentValidatorSetHashReturn(pub [u8; 32]);
-#[doc = "Container type for all return fields from the `getWhitelistAmountFor` function with signature `getWhitelistAmountFor(address)` and selector `[98, 162, 89, 159]`"]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthAbiType,
-    ethers :: contract :: EthAbiCodec,
-    Default,
-)]
-pub struct GetWhitelistAmountForReturn(pub ethers::core::types::U256);
-#[doc = "Container type for all return fields from the `nextValidatorSetHash` function with signature `nextValidatorSetHash()` and selector `[117, 45, 59, 137]`"]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthAbiType,
-    ethers :: contract :: EthAbiCodec,
-    Default,
-)]
-pub struct NextValidatorSetHashReturn(pub [u8; 32]);

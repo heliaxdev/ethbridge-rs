@@ -32,6 +32,26 @@ pub struct NamadaTransfer {
     pub amount: ethers::core::types::U256,
     pub to: String,
 }
+#[doc = "`RelayProof((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string)`"]
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    Eq,
+    PartialEq,
+    ethers :: contract :: EthAbiType,
+    ethers :: contract :: EthAbiCodec,
+)]
+pub struct RelayProof {
+    pub validator_set_args: ValidatorSetArgs,
+    pub signatures: ::std::vec::Vec<Signature>,
+    pub transfers: ::std::vec::Vec<ERC20Transfer>,
+    pub pool_root: [u8; 32],
+    pub proof: Vec<[u8; 32]>,
+    pub proof_flags: Vec<bool>,
+    pub batch_nonce: ethers::core::types::U256,
+    pub relayer_address: String,
+}
 #[doc = "`Signature(bytes32,bytes32,uint8)`"]
 #[derive(
     Clone,
