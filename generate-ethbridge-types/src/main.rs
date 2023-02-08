@@ -144,6 +144,25 @@ fn generate_crates(
         })
         .chain(abi.call_structs.into_iter().map(|tt| tt.into())),
     )?;
+    generate_crate_template(
+        get_subcrate(abi_file, "events"),
+        version,
+        vec![
+            ("ethbridge-structs".into(), version.into()),
+            ("ethers".into(), "1.0.2".into()),
+        ],
+        paths,
+    )?;
+    generate_crate_source(
+        get_subcrate(abi_file, "events"),
+        paths,
+        std::iter::once(quote! {
+            #![allow(dead_code)]
+            #![allow(unused_imports)]
+            use ::ethbridge_structs::*;
+        })
+        .chain(abi.events.into_iter().map(|tt| tt.into())),
+    )?;
     Ok(())
 }
 
