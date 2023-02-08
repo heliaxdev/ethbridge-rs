@@ -1,5 +1,5 @@
 [workspace]
 members = [
     "generate-ethbridge-types",
-    "ethbridge-structs"
+    "ethbridge-*"
 ]

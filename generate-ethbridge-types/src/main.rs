@@ -126,7 +126,24 @@ fn generate_crates(
         );
         structs.insert(key, tts);
     }
-    //generate_crate_template(get_subcrate(abi_file, "structs"), version, vec![], paths)?;
+    generate_crate_template(
+        get_subcrate(abi_file, "calls"),
+        version,
+        vec![
+            ("ethbridge-structs".into(), version.into()),
+            ("ethers".into(), "1.0.2".into()),
+        ],
+        paths,
+    )?;
+    generate_crate_source(
+        get_subcrate(abi_file, "calls"),
+        paths,
+        std::iter::once(quote! {
+            #![allow(dead_code)]
+            use ::ethbridge_structs::*;
+        })
+        .chain(abi.call_structs.into_iter().map(|tt| tt.into())),
+    )?;
     Ok(())
 }
 
@@ -138,7 +155,13 @@ fn generate_crate_template(
 ) -> eyre::Result<()> {
     let deps = deps
         .into_iter()
-        .map(|(dep, ver)| format!("{dep} = \"{ver}\""))
+        .map(|(dep, ver)| {
+            if !dep.starts_with("ethbridge-") {
+                format!("{dep} = \"{ver}\"")
+            } else {
+                format!("{dep} = {{ path = \"../{dep}\" }}")
+            }
+        })
         .join("\n");
     let crate_path = paths.output_dir.join(&crate_name);
     let cargo_toml_path = crate_path.join("Cargo.toml");
@@ -166,11 +189,7 @@ fn generate_crate_source(
     paths: &Paths,
     source: impl IntoIterator<Item = TokenStream>,
 ) -> eyre::Result<()> {
-    let lib_path = paths
-        .output_dir
-        .join(&crate_name)
-        .join("src")
-        .join("lib.rs");
+    let lib_path = paths.output_dir.join(crate_name).join("src").join("lib.rs");
     let source = source
         .into_iter()
         .fold(TokenStream::new(), |mut stream, other| {
