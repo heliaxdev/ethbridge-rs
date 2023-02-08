@@ -1,0 +1,8 @@
+[package]
+name = "ethbridge-bridge-calls"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethbridge-structs = { path = "../ethbridge-structs" }
+ethers = "1.0.2"
