@@ -73,12 +73,14 @@ fn run() -> eyre::Result<()> {
     generate_crates("Bridge", &crate_version, &paths, &mut structs)?;
     generate_crates("Governance", &crate_version, &paths, &mut structs)?;
 
+    process_structs(&mut structs);
     generate_crate_template(
         "ethbridge-structs".into(),
         &crate_version,
         vec![("ethers".into(), ETHERS_VERSION.into())],
         &paths,
     )?;
+    //println!("{:#?}", structs.values().collect::<Vec<_>>());
     generate_crate_source(
         "ethbridge-structs".into(),
         &paths,
@@ -89,6 +91,37 @@ fn run() -> eyre::Result<()> {
     )?;
 
     Ok(())
+}
+
+fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
+    for s in structs.values_mut() {
+        // process derives
+        let TokenTree::Group(derives) = s[3].clone().into_iter().next().unwrap() else {
+            panic!("should have derives");
+        };
+        let mut derives = derives.stream().into_iter();
+        derives.next(); // skip first tok "derive"
+        let TokenTree::Group(derives) = derives.next().unwrap() else {
+            panic!("should have derives");
+        };
+        let derives = derives
+            .stream()
+            .into_iter()
+            .take_while(|d| !matches!(d, TokenTree::Ident(i) if i.to_string() == "ethers"))
+            .map(TokenStream::from)
+            .fold(TokenStream::new(), |mut stream, other| {
+                stream.extend(other);
+                stream
+            });
+        s[3] = quote! {
+            [derive(
+                #derives
+            )]
+            #[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
+            #[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+        };
+        //println!("Derives: {derives:#?}");
+    }
 }
 
 fn generate_crates(
