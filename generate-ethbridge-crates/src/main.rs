@@ -8,6 +8,7 @@ use itertools::Itertools;
 use proc_macro2::{TokenStream, TokenTree};
 use quote::quote;
 
+const ETHABI_VERSION: &str = "18.0.0";
 const ETHERS_VERSION: &str = "1.0.2";
 
 struct Paths {
@@ -77,7 +78,10 @@ fn run() -> eyre::Result<()> {
     generate_crate_template(
         "ethbridge-structs".into(),
         &crate_version,
-        vec![("ethers".into(), ETHERS_VERSION.into())],
+        vec![
+            ("ethabi".into(), ETHABI_VERSION.into()),
+            ("ethers".into(), ETHERS_VERSION.into()),
+        ],
         &paths,
     )?;
     //println!("{:#?}", structs.values().collect::<Vec<_>>());
@@ -95,7 +99,7 @@ fn run() -> eyre::Result<()> {
 
 fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
     for s in structs.values_mut() {
-        // process derives
+        // process derives - make ethers derives optional
         let TokenTree::Group(derives) = s[3].clone().into_iter().next().unwrap() else {
             panic!("should have derives");
         };
@@ -120,7 +124,30 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
             #[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
             #[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
         };
-        //println!("Derives: {derives:#?}");
+
+        // process fields - should use types from `ethabi` instead
+        let TokenTree::Group(fields) = s[7].clone().into_iter().next().unwrap() else {
+            panic!("should have derives");
+        };
+        let fields = fields
+            .stream()
+            .into_iter()
+            .group_by(|tt| {
+                if let TokenTree::Punct(p) = tt {
+                    p.as_char() == ','
+                } else {
+                    false
+                }
+            })
+            .into_iter()
+            .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
+            .collect_vec();
+        // TODO:
+        // - look at each field vec of tts
+        // - if tts[3] = "ethers":
+        //      - delete tts[3..], and replace it with `ethabi::...` + tts[tts.len()-1]
+        //  - otherwise keep field unchanged
+        println!("Fields: {fields:#?}");
     }
 }
 
