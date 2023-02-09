@@ -8,6 +8,8 @@ use itertools::Itertools;
 use proc_macro2::{TokenStream, TokenTree};
 use quote::quote;
 
+const ETHERS_VERSION: &str = "1.0.2";
+
 struct Paths {
     /// Path to the output directory of the generated crates.
     output_dir: PathBuf,
@@ -74,7 +76,7 @@ fn run() -> eyre::Result<()> {
     generate_crate_template(
         "ethbridge-structs".into(),
         &crate_version,
-        vec![("ethers".into(), "1.0.2".into())],
+        vec![("ethers".into(), ETHERS_VERSION.into())],
         &paths,
     )?;
     generate_crate_source(
@@ -131,7 +133,7 @@ fn generate_crates(
         version,
         vec![
             ("ethbridge-structs".into(), String::new()),
-            ("ethers".into(), "1.0.2".into()),
+            ("ethers".into(), ETHERS_VERSION.into()),
         ],
         paths,
     )?;
@@ -149,7 +151,7 @@ fn generate_crates(
         version,
         vec![
             ("ethbridge-structs".into(), String::new()),
-            ("ethers".into(), "1.0.2".into()),
+            ("ethers".into(), ETHERS_VERSION.into()),
         ],
         paths,
     )?;
@@ -173,7 +175,7 @@ fn generate_crates(
                 || ("ethbridge-governance-events".into(), String::new()),
             ),
             ("ethbridge-structs".into(), String::new()),
-            ("ethers".into(), "1.0.2".into()),
+            ("ethers".into(), ETHERS_VERSION.into()),
         ],
         paths,
     )?;
