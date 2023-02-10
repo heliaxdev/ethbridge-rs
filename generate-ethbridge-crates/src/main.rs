@@ -1,3 +1,5 @@
+mod templates;
+
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
@@ -6,10 +8,14 @@ use ethers_contract::Abigen;
 use eyre::{eyre as err, WrapErr};
 use itertools::Itertools;
 use proc_macro2::{TokenStream, TokenTree};
-use quote::quote;
+use quote::{quote, ToTokens};
+
+use self::templates::CargoTomlDepMeta;
 
 const ETHABI_VERSION: &str = "18.0.0";
 const ETHERS_VERSION: &str = "1.0.2";
+
+const FEATURE_GATE_ETHERS: &str = "ethers-derive";
 
 struct Paths {
     /// Path to the output directory of the generated crates.
@@ -78,10 +84,23 @@ fn run() -> eyre::Result<()> {
     generate_crate_template(
         "ethbridge-structs".into(),
         &crate_version,
-        vec![
-            ("ethabi".into(), ETHABI_VERSION.into()),
-            ("ethers".into(), ETHERS_VERSION.into()),
+        [
+            (
+                "ethabi".into(),
+                CargoTomlDepMeta {
+                    version: ETHABI_VERSION.into(),
+                    optional: false,
+                },
+            ),
+            (
+                "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: true,
+                },
+            ),
         ],
+        [(FEATURE_GATE_ETHERS.into(), vec!["ethers".into()])],
         &paths,
     )?;
     //println!("{:#?}", structs.values().collect::<Vec<_>>());
@@ -111,25 +130,28 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
         let derives = derives
             .stream()
             .into_iter()
-            .take_while(|d| !matches!(d, TokenTree::Ident(i) if i.to_string() == "ethers"))
+            .take_while(|d| {
+                #[allow(clippy::cmp_owned)]
+                !matches!(d, TokenTree::Ident(i) if i.to_string() == "ethers")
+            })
             .map(TokenStream::from)
             .fold(TokenStream::new(), |mut stream, other| {
                 stream.extend(other);
                 stream
             });
+        let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
         s[3] = quote! {
             [derive(
                 #derives
             )]
-            #[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
-            #[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiType))]
+            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiCodec))]
         };
-
         // process fields - should use types from `ethabi` instead
         let TokenTree::Group(fields) = s[7].clone().into_iter().next().unwrap() else {
             panic!("should have derives");
         };
-        let fields = fields
+        let mut fields = fields
             .stream()
             .into_iter()
             .group_by(|tt| {
@@ -142,12 +164,52 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
             .into_iter()
             .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
             .collect_vec();
-        // TODO:
-        // - look at each field vec of tts
-        // - if tts[3] = "ethers":
-        //      - delete tts[3..], and replace it with `ethabi::...` + tts[tts.len()-1]
-        //  - otherwise keep field unchanged
-        println!("Fields: {fields:#?}");
+        for field in fields.iter_mut() {
+            let field_type_prefix = field[3].to_string();
+            match field_type_prefix.as_str() {
+                "ethers" => {
+                    let imported_type = field.pop().unwrap();
+                    field.truncate(3);
+                    field.extend(
+                        quote! {
+                            ::ethabi::ethereum_types::#imported_type
+                        }
+                        .into_iter(),
+                    );
+                }
+                // NOTE: handle edge cases here. hashmaps and such
+                // may be missing, if they're generated, later, on
+                // smart contract revisions
+                "Vec" if field[5].to_string() == "ethers" => {
+                    field.pop().unwrap(); // pop last bracket
+                    let imported_type = field.pop().unwrap();
+                    field.truncate(4);
+                    field.extend(quote! {
+                        <::ethabi::ethereum_types::#imported_type>
+                    });
+                }
+                _ => {}
+            }
+        }
+        let fields = fields
+            .into_iter()
+            .map(|tts| {
+                let tt = tts.into_iter().map_into::<TokenStream>().fold(
+                    TokenStream::new(),
+                    |mut stream, other| {
+                        stream.extend(other);
+                        stream
+                    },
+                );
+                quote! { #tt, }
+            })
+            .fold(TokenStream::new(), |mut stream, other| {
+                stream.extend(other);
+                stream
+            });
+        s[7] = quote! {
+            { #fields }
+        };
     }
 }
 
@@ -191,10 +253,23 @@ fn generate_crates(
     generate_crate_template(
         get_subcrate(abi_file, "calls"),
         version,
-        vec![
-            ("ethbridge-structs".into(), String::new()),
-            ("ethers".into(), ETHERS_VERSION.into()),
+        [
+            (
+                "ethbridge-structs".into(),
+                CargoTomlDepMeta {
+                    version: String::new(),
+                    optional: false,
+                },
+            ),
+            (
+                "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                },
+            ),
         ],
+        [],
         paths,
     )?;
     generate_crate_source(
@@ -209,10 +284,23 @@ fn generate_crates(
     generate_crate_template(
         get_subcrate(abi_file, "events"),
         version,
-        vec![
-            ("ethbridge-structs".into(), String::new()),
-            ("ethers".into(), ETHERS_VERSION.into()),
+        [
+            (
+                "ethbridge-structs".into(),
+                CargoTomlDepMeta {
+                    version: String::new(),
+                    optional: false,
+                },
+            ),
+            (
+                "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                },
+            ),
         ],
+        [],
         paths,
     )?;
     generate_crate_source(
@@ -228,15 +316,44 @@ fn generate_crates(
     generate_crate_template(
         get_subcrate(abi_file, "contract"),
         version,
-        vec![
+        [
             dispatch_on_abi(
                 abi_file,
-                || ("ethbridge-bridge-events".into(), String::new()),
-                || ("ethbridge-governance-events".into(), String::new()),
+                || {
+                    (
+                        "ethbridge-bridge-events".into(),
+                        CargoTomlDepMeta {
+                            version: String::new(),
+                            optional: false,
+                        },
+                    )
+                },
+                || {
+                    (
+                        "ethbridge-governance-events".into(),
+                        CargoTomlDepMeta {
+                            version: String::new(),
+                            optional: false,
+                        },
+                    )
+                },
             ),
-            ("ethbridge-structs".into(), String::new()),
-            ("ethers".into(), ETHERS_VERSION.into()),
+            (
+                "ethbridge-structs".into(),
+                CargoTomlDepMeta {
+                    version: String::new(),
+                    optional: false,
+                },
+            ),
+            (
+                "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                },
+            ),
         ],
+        [],
         paths,
     )?;
     generate_crate_source(
@@ -285,36 +402,26 @@ where
 fn generate_crate_template(
     crate_name: String,
     crate_version: &str,
-    deps: Vec<(String, String)>,
+    deps: impl Into<BTreeMap<String, CargoTomlDepMeta>>,
+    feats: impl Into<BTreeMap<String, Vec<String>>>,
     paths: &Paths,
 ) -> eyre::Result<()> {
-    let deps = deps
-        .into_iter()
-        .map(|(dep, ver)| {
-            if !dep.starts_with("ethbridge-") {
-                format!("{dep} = \"{ver}\"")
-            } else {
-                format!("{dep} = {{ path = \"../{dep}\" }}")
-            }
-        })
-        .join("\n");
     let crate_path = paths.output_dir.join(&crate_name);
     let cargo_toml_path = crate_path.join("Cargo.toml");
     std::fs::create_dir_all(crate_path.join("src"))
         .with_context(|| format!("failed to create directory: {}", crate_path.display()))?;
+    let cargo_template = templates::cargo();
+    let mut tera_context = tera::Context::new();
+    tera_context.insert("crate_name", &crate_name);
+    tera_context.insert("crate_version", &crate_version);
+    tera_context.insert("dependencies", &deps.into());
+    tera_context.insert("features", &feats.into());
+    tera_context.insert("feature_gate_ethers", FEATURE_GATE_ETHERS);
     let err = std::fs::write(
         &cargo_toml_path,
-        format!(
-            "\
-[package]
-name = \"{crate_name}\"
-version = \"{crate_version}\"
-edition = \"2021\"
-
-[dependencies]
-{deps}
-"
-        ),
+        cargo_template
+            .render("Cargo.toml", &tera_context)
+            .context("failed to render Cargo.toml")?,
     );
     err.with_context(|| format!("failed to create file: {}", cargo_toml_path.display()))
 }
