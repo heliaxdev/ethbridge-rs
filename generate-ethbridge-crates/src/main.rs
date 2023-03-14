@@ -306,6 +306,13 @@ fn generate_crates(
                     optional: false,
                 },
             ),
+            (
+                "ethers-contract".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                },
+            ),
         ],
         [],
         paths,
@@ -332,6 +339,13 @@ fn generate_crates(
             ),
             (
                 "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                },
+            ),
+            (
+                "ethers-contract".into(),
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
@@ -385,6 +399,13 @@ fn generate_crates(
             ),
             (
                 "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                },
+            ),
+            (
+                "ethers-contract".into(),
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
