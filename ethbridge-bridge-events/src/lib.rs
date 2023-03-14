@@ -3,30 +3,32 @@
 use ::ethbridge_structs::*;
 #[derive(
     Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthEvent,
-    ethers :: contract :: EthDisplay,
+    :: ethers_contract :: EthEvent,
+    :: ethers_contract :: EthDisplay,
     Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 #[ethevent(
     name = "InvalidTransferToNamada",
     abi = "InvalidTransferToNamada(address,string,uint256)"
 )]
 pub struct InvalidTransferToNamadaFilter {
-    pub from: ethers::core::types::Address,
-    pub to: String,
-    pub amount: ethers::core::types::U256,
+    pub from: ::ethers::core::types::Address,
+    pub to: ::std::string::String,
+    pub amount: ::ethers::core::types::U256,
 }
 #[derive(
     Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthEvent,
-    ethers :: contract :: EthDisplay,
+    :: ethers_contract :: EthEvent,
+    :: ethers_contract :: EthDisplay,
     Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 #[ethevent(
     name = "TransferToErc",
@@ -34,43 +36,42 @@ pub struct InvalidTransferToNamadaFilter {
 )]
 pub struct TransferToErcFilter {
     #[ethevent(indexed)]
-    pub nonce: ethers::core::types::U256,
+    pub nonce: ::ethers::core::types::U256,
     pub transfers: ::std::vec::Vec<Erc20Transfer>,
-    pub valid_map: Vec<bool>,
-    pub relayer_address: String,
+    pub valid_map: ::std::vec::Vec<bool>,
+    pub relayer_address: ::std::string::String,
 }
 #[derive(
     Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    ethers :: contract :: EthEvent,
-    ethers :: contract :: EthDisplay,
+    :: ethers_contract :: EthEvent,
+    :: ethers_contract :: EthDisplay,
     Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 #[ethevent(
     name = "TransferToNamada",
     abi = "TransferToNamada(uint256,(address,uint256,string)[],bool[],uint256)"
 )]
 pub struct TransferToNamadaFilter {
-    pub nonce: ethers::core::types::U256,
+    pub nonce: ::ethers::core::types::U256,
     pub trasfers: ::std::vec::Vec<NamadaTransfer>,
-    pub valid_map: Vec<bool>,
-    pub confirmations: ethers::core::types::U256,
+    pub valid_map: ::std::vec::Vec<bool>,
+    pub confirmations: ::ethers::core::types::U256,
 }
-#[derive(Debug, Clone, PartialEq, Eq, ethers :: contract :: EthAbiType)]
+#[doc = "Container type for all of the contract's events"]
+#[derive(Clone, :: ethers_contract :: EthAbiType, Debug, PartialEq, Eq, Hash)]
 pub enum BridgeEvents {
     InvalidTransferToNamadaFilter(InvalidTransferToNamadaFilter),
     TransferToErcFilter(TransferToErcFilter),
     TransferToNamadaFilter(TransferToNamadaFilter),
 }
-impl ethers::contract::EthLogDecode for BridgeEvents {
+impl ::ethers_contract::EthLogDecode for BridgeEvents {
     fn decode_log(
-        log: &ethers::core::abi::RawLog,
-    ) -> ::std::result::Result<Self, ethers::core::abi::Error>
-    where
-        Self: Sized,
-    {
+        log: &::ethers::core::abi::RawLog,
+    ) -> ::core::result::Result<Self, ::ethers::core::abi::Error> {
         if let Ok(decoded) = InvalidTransferToNamadaFilter::decode_log(log) {
             return Ok(BridgeEvents::InvalidTransferToNamadaFilter(decoded));
         }
@@ -80,15 +81,30 @@ impl ethers::contract::EthLogDecode for BridgeEvents {
         if let Ok(decoded) = TransferToNamadaFilter::decode_log(log) {
             return Ok(BridgeEvents::TransferToNamadaFilter(decoded));
         }
-        Err(ethers::core::abi::Error::InvalidData)
+        Err(::ethers::core::abi::Error::InvalidData)
     }
 }
-impl ::std::fmt::Display for BridgeEvents {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+impl ::core::fmt::Display for BridgeEvents {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         match self {
-            BridgeEvents::InvalidTransferToNamadaFilter(element) => element.fmt(f),
-            BridgeEvents::TransferToErcFilter(element) => element.fmt(f),
-            BridgeEvents::TransferToNamadaFilter(element) => element.fmt(f),
+            Self::InvalidTransferToNamadaFilter(element) => ::core::fmt::Display::fmt(element, f),
+            Self::TransferToErcFilter(element) => ::core::fmt::Display::fmt(element, f),
+            Self::TransferToNamadaFilter(element) => ::core::fmt::Display::fmt(element, f),
         }
+    }
+}
+impl ::core::convert::From<InvalidTransferToNamadaFilter> for BridgeEvents {
+    fn from(value: InvalidTransferToNamadaFilter) -> Self {
+        Self::InvalidTransferToNamadaFilter(value)
+    }
+}
+impl ::core::convert::From<TransferToErcFilter> for BridgeEvents {
+    fn from(value: TransferToErcFilter) -> Self {
+        Self::TransferToErcFilter(value)
+    }
+}
+impl ::core::convert::From<TransferToNamadaFilter> for BridgeEvents {
+    fn from(value: TransferToNamadaFilter) -> Self {
+        Self::TransferToNamadaFilter(value)
     }
 }
