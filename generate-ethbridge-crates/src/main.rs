@@ -13,7 +13,7 @@ use quote::{quote, ToTokens};
 use self::templates::CargoTomlDepMeta;
 
 const ETHABI_VERSION: &str = "18.0.0";
-const ETHERS_VERSION: &str = "1.0.2";
+const ETHERS_VERSION: &str = "2.0.0";
 
 const FEATURE_GATE_ETHERS: &str = "ethers-derive";
 
@@ -127,14 +127,49 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
         let TokenTree::Group(derives) = derives.next().unwrap() else {
             panic!("should have derives");
         };
-        let derives = derives
+        let mut derives = derives
             .stream()
             .into_iter()
-            .take_while(|d| {
-                #[allow(clippy::cmp_owned)]
-                !matches!(d, TokenTree::Ident(i) if i.to_string() == "ethers")
+            .group_by(|tt| {
+                if let TokenTree::Punct(p) = tt {
+                    p.as_char() == ','
+                } else {
+                    false
+                }
             })
-            .map(TokenStream::from)
+            .into_iter()
+            .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
+            .collect_vec();
+        for derive in derives.iter_mut() {
+            if derive.len() == 1 {
+                continue;
+            }
+            if derive[0].to_string() != ":" {
+                continue;
+            }
+            if derive[1].to_string() != ":" {
+                continue;
+            }
+            if derive[2].to_string() != "ethers_contract" {
+                continue;
+            }
+            derive.clear();
+        }
+        let derives = derives
+            .into_iter()
+            .filter_map(|tts| {
+                if tts.is_empty() {
+                    return None;
+                }
+                let tt = tts.into_iter().map_into::<TokenStream>().fold(
+                    TokenStream::new(),
+                    |mut stream, other| {
+                        stream.extend(other);
+                        stream
+                    },
+                );
+                Some(quote! { #tt, })
+            })
             .fold(TokenStream::new(), |mut stream, other| {
                 stream.extend(other);
                 stream
@@ -167,7 +202,7 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
         for field in fields.iter_mut() {
             let field_type_prefix = field[3].to_string();
             match field_type_prefix.as_str() {
-                "ethers" => {
+                ":" if field.len() >= 6 && field[5].to_string() == "ethers" => {
                     let imported_type = field.pop().unwrap();
                     field.truncate(3);
                     field.extend(
@@ -180,10 +215,13 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
                 // NOTE: handle edge cases here. hashmaps and such
                 // may be missing, if they're generated, later, on
                 // smart contract revisions
-                "Vec" if field[5].to_string() == "ethers" => {
+                ":" if field.len() >= 14
+                    && field[11].to_string() == "Vec"
+                    && field[13].to_string() == ":" =>
+                {
                     field.pop().unwrap(); // pop last bracket
                     let imported_type = field.pop().unwrap();
-                    field.truncate(4);
+                    field.truncate(12);
                     field.extend(quote! {
                         <::ethabi::ethereum_types::#imported_type>
                     });
