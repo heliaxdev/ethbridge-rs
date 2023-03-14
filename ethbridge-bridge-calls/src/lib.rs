@@ -89,7 +89,7 @@ pub struct TransferToErcCall {
     abi = "transferToNamada((address,uint256,string)[],uint256)"
 )]
 pub struct TransferToNamadaCall {
-    pub tranfers: ::std::vec::Vec<NamadaTransfer>,
+    pub transfers: ::std::vec::Vec<NamadaTransfer>,
     pub confirmations: ethers::core::types::U256,
 }
 #[doc = "Container type for all input parameters for the `updateTokenWhitelist` function with signature `updateTokenWhitelist(address[],uint256[])` and selector `[105, 128, 221, 21]`"]

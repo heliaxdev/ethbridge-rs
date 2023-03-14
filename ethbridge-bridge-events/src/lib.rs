@@ -30,12 +30,13 @@ pub struct InvalidTransferToNamadaFilter {
 )]
 #[ethevent(
     name = "TransferToErc",
-    abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],string)"
+    abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
 )]
 pub struct TransferToErcFilter {
     #[ethevent(indexed)]
     pub nonce: ethers::core::types::U256,
     pub transfers: ::std::vec::Vec<Erc20Transfer>,
+    pub valid_map: Vec<bool>,
     pub relayer_address: String,
 }
 #[derive(
@@ -49,11 +50,12 @@ pub struct TransferToErcFilter {
 )]
 #[ethevent(
     name = "TransferToNamada",
-    abi = "TransferToNamada(uint256,(address,uint256,string)[],uint256)"
+    abi = "TransferToNamada(uint256,(address,uint256,string)[],bool[],uint256)"
 )]
 pub struct TransferToNamadaFilter {
     pub nonce: ethers::core::types::U256,
     pub trasfers: ::std::vec::Vec<NamadaTransfer>,
+    pub valid_map: Vec<bool>,
     pub confirmations: ethers::core::types::U256,
 }
 #[derive(Debug, Clone, PartialEq, Eq, ethers :: contract :: EthAbiType)]
