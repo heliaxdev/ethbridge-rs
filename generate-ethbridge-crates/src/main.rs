@@ -116,6 +116,50 @@ fn run() -> eyre::Result<()> {
     Ok(())
 }
 
+fn process_events(events: TokenStream) -> TokenStream {
+    let mut events_file =
+        syn::parse2::<syn::File>(events).expect("The generated code is syntactically correct");
+    events_file.items.iter_mut().for_each(|item| match item {
+        impl_ @ syn::Item::Impl(_) => process_events_impl(impl_),
+        _ => (),
+    });
+    events_file.into_token_stream()
+}
+
+fn process_events_impl(item: &mut syn::Item) {
+    let should_feature_gate = {
+        let syn::Item::Impl(impl_) = item else {
+            unreachable!()
+        };
+        impl_
+            .trait_
+            .as_ref()
+            .map(|(_, path, _)| {
+                path.to_token_stream()
+                    .to_string()
+                    .contains("ethers_contract")
+            })
+            .unwrap_or(false)
+    };
+
+    // nothing to do
+    if !should_feature_gate {
+        return;
+    }
+
+    let mut item_temp = syn::Item::Verbatim(TokenStream::new());
+    std::mem::swap(&mut item_temp, item);
+
+    let item_tokens = item_temp.into_token_stream();
+    let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+
+    *item = syn::parse2(quote! {
+        #[cfg(feature = #feature_gate)]
+        #item_tokens
+    })
+    .expect("Should have the right syntax");
+}
+
 fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
     for s in structs.values_mut() {
         // process derives - make ethers derives optional
@@ -348,11 +392,11 @@ fn generate_crates(
                 "ethers-contract".into(),
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
-                    optional: false,
+                    optional: true,
                 },
             ),
         ],
-        [],
+        [(FEATURE_GATE_ETHERS.into(), vec!["ethers-contract".into()])],
         paths,
     )?;
     generate_crate_source(
@@ -363,7 +407,7 @@ fn generate_crates(
             #![allow(unused_imports)]
             use ::ethbridge_structs::*;
         })
-        .chain(abi.events.into_iter().map(|tt| tt.into())),
+        .chain(process_events(abi.events).into_iter().map(|tt| tt.into())),
     )?;
     generate_crate_template(
         get_subcrate(abi_file, "contract"),

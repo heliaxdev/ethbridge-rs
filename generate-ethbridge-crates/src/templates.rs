@@ -59,8 +59,8 @@ fn vecstr_quote(params: &HashMap<String, tera::Value>) -> tera::Result<tera::Val
             .iter()
             .flat_map(|value| {
                 let tera::Value::String(s) = value else {
-                return None;
-            };
+                    return None;
+                };
                 Some(tera::Value::String(format!("\"{s}\"")))
             })
             .collect(),
