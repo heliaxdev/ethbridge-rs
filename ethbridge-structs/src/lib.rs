@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 #[doc = "`Erc20Transfer(address,address,uint256,string,uint256,string)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 pub struct Erc20Transfer {
     pub from: ::ethabi::ethereum_types::Address,
     pub to: ::ethabi::ethereum_types::Address,
@@ -13,8 +13,8 @@ pub struct Erc20Transfer {
 }
 #[doc = "`NamadaTransfer(address,uint256,string)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 pub struct NamadaTransfer {
     pub from: ::ethabi::ethereum_types::Address,
     pub amount: ::ethabi::ethereum_types::U256,
@@ -22,8 +22,8 @@ pub struct NamadaTransfer {
 }
 #[doc = "`RelayProof((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 pub struct RelayProof {
     pub validator_set_args: ValidatorSetArgs,
     pub signatures: ::std::vec::Vec<Signature>,
@@ -36,8 +36,8 @@ pub struct RelayProof {
 }
 #[doc = "`Signature(bytes32,bytes32,uint8)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 pub struct Signature {
     pub r: [u8; 32],
     pub s: [u8; 32],
@@ -45,8 +45,8 @@ pub struct Signature {
 }
 #[doc = "`ValidatorSetArgs(address[],uint256[],uint256)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiType))]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers::contract::EthAbiCodec))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 pub struct ValidatorSetArgs {
     pub validators: ::std::vec::Vec<::ethabi::ethereum_types::Address>,
     pub powers: ::std::vec::Vec<::ethabi::ethereum_types::U256>,

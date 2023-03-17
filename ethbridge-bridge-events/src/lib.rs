@@ -1,53 +1,47 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 use ::ethbridge_structs::*;
-#[derive(
-    Clone,
-    :: ethers_contract :: EthEvent,
-    :: ethers_contract :: EthDisplay,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthEvent))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
+#[cfg_attr(
+    feature = "ethers-derive",
+    ethevent(
+        name = "TransferToErc",
+        abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
+    )
 )]
-#[ethevent(
-    name = "TransferToErc",
-    abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
-)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToErcFilter {
-    #[ethevent(indexed)]
+    #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
     pub nonce: ::ethers::core::types::U256,
     pub transfers: ::std::vec::Vec<Erc20Transfer>,
     pub valid_map: ::std::vec::Vec<bool>,
     pub relayer_address: ::std::string::String,
 }
-#[derive(
-    Clone,
-    :: ethers_contract :: EthEvent,
-    :: ethers_contract :: EthDisplay,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthEvent))]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
+#[cfg_attr(
+    feature = "ethers-derive",
+    ethevent(
+        name = "TransferToNamada",
+        abi = "TransferToNamada(uint256,(address,uint256,string)[],bool[],uint256)"
+    )
 )]
-#[ethevent(
-    name = "TransferToNamada",
-    abi = "TransferToNamada(uint256,(address,uint256,string)[],bool[],uint256)"
-)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToNamadaFilter {
     pub nonce: ::ethers::core::types::U256,
     pub trasfers: ::std::vec::Vec<NamadaTransfer>,
     pub valid_map: ::std::vec::Vec<bool>,
     pub confirmations: ::ethers::core::types::U256,
 }
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
 #[doc = "Container type for all of the contract's events"]
-#[derive(Clone, :: ethers_contract :: EthAbiType, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum BridgeEvents {
     TransferToErcFilter(TransferToErcFilter),
     TransferToNamadaFilter(TransferToNamadaFilter),
 }
+#[cfg(feature = "ethers-derive")]
 impl ::ethers_contract::EthLogDecode for BridgeEvents {
     fn decode_log(
         log: &::ethers::core::abi::RawLog,
@@ -61,6 +55,7 @@ impl ::ethers_contract::EthLogDecode for BridgeEvents {
         Err(::ethers::core::abi::Error::InvalidData)
     }
 }
+#[cfg(feature = "ethers-derive")]
 impl ::core::fmt::Display for BridgeEvents {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         match self {

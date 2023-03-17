@@ -1,7 +1,7 @@
 
 [package]
 name = "ethbridge-bridge-contract"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 
 [features]
@@ -10,11 +10,11 @@ edition = "2021"
 [dependencies]
 
 
-ethbridge-bridge-events = { path = "../ethbridge-bridge-events" }
+ethbridge-bridge-events = { path = "../ethbridge-bridge-events", features = ["ethers-derive"] }
 
 
 
-ethbridge-structs = { path = "../ethbridge-structs", features = ["ethers-derive"] }
+ethbridge-structs = { path = "../ethbridge-structs", features = [] }
 
 
 
