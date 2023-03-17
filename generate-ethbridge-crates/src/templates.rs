@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct CargoTomlDepMeta {
+    pub feats: Vec<String>,
     pub version: String,
     pub optional: bool,
 }
@@ -21,10 +22,8 @@ edition = "2021"
 
 [dependencies]
 {% for dep, meta in dependencies %}
-{% if dep == "ethbridge-structs" %}
-{{ dep }} = { path = "../{{ dep }}", features = ["{{ feature_gate_ethers }}"] }
-{% elif str_has_prefix(input_str=dep, prefix="ethbridge-") %}
-{{ dep }} = { path = "../{{ dep }}" }
+{% if str_has_prefix(input_str=dep, prefix="ethbridge-") %}
+{{ dep }} = { path = "../{{ dep }}", features = {{ vecstr_quote(vec=meta.feats) }} }
 {% else %}
 {{ dep }} = { version = "{{ meta.version }}", optional = {{ meta.optional }} }
 {% endif %}
@@ -61,7 +60,7 @@ fn vecstr_quote(params: &HashMap<String, tera::Value>) -> tera::Result<tera::Val
                 let tera::Value::String(s) = value else {
                     return None;
                 };
-                Some(tera::Value::String(format!("\"{s}\"")))
+                Some(tera::Value::String(format!("{s:?}")))
             })
             .collect(),
     ))

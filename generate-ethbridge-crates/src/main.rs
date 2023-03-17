@@ -90,6 +90,15 @@ fn run() -> eyre::Result<()> {
                 CargoTomlDepMeta {
                     version: ETHABI_VERSION.into(),
                     optional: false,
+                    ..Default::default()
+                },
+            ),
+            (
+                "ethers-contract".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: true,
+                    ..Default::default()
                 },
             ),
             (
@@ -97,10 +106,14 @@ fn run() -> eyre::Result<()> {
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: true,
+                    ..Default::default()
                 },
             ),
         ],
-        [(FEATURE_GATE_ETHERS.into(), vec!["ethers".into()])],
+        [(
+            FEATURE_GATE_ETHERS.into(),
+            vec!["ethers".into(), "ethers-contract".into()],
+        )],
         &paths,
     )?;
     generate_crate_source(
@@ -185,7 +198,7 @@ fn process_events_enum(item: &mut syn::Item) {
             .next()
             .expect("Should have derives");
 
-        let (derives, cfgs) = process_derives_tt(derives, false);
+        let (derives, cfgs) = process_derives_tt(derives);
         enum_.attrs[1].tokens = quote! {
             (#derives)
         };
@@ -213,7 +226,7 @@ fn process_events_struct(item: &mut syn::Item) {
             .next()
             .expect("Should have derives");
 
-        let (derives, cfgs) = process_derives_tt(derives, true);
+        let (derives, cfgs) = process_derives_tt(derives);
         struct_.attrs[0].tokens = quote! {
             (#derives)
         };
@@ -239,14 +252,14 @@ fn process_events_struct(item: &mut syn::Item) {
         add_toks_before_item(
             item,
             quote! {
-                #[cfg_attr(feature = #feature_gate, ethevent #ethevent_before_struct)]
                 #cfgs
+                #[cfg_attr(feature = #feature_gate, ethevent #ethevent_before_struct)]
             },
         );
     }
 }
 
-fn process_derives_tt(derives: Group, with_codec: bool) -> (TokenStream, TokenStream) {
+fn process_derives_tt(derives: Group) -> (TokenStream, TokenStream) {
     let mut derives = derives
         .stream()
         .into_iter()
@@ -260,6 +273,7 @@ fn process_derives_tt(derives: Group, with_codec: bool) -> (TokenStream, TokenSt
         .into_iter()
         .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
         .collect_vec();
+    let mut ethers_derives = Vec::new();
     for derive in derives.iter_mut() {
         if derive.len() == 1 {
             continue;
@@ -273,7 +287,8 @@ fn process_derives_tt(derives: Group, with_codec: bool) -> (TokenStream, TokenSt
         if derive[2].to_string() != "ethers_contract" {
             continue;
         }
-        derive.clear();
+        let derive = std::mem::take(derive);
+        ethers_derives.push(derive);
     }
     let derives = derives
         .into_iter()
@@ -295,16 +310,19 @@ fn process_derives_tt(derives: Group, with_codec: bool) -> (TokenStream, TokenSt
             stream
         });
     let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
-    let cfgs = if with_codec {
-        quote! {
-            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiType))]
-            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiCodec))]
-        }
-    } else {
-        quote! {
-            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiType))]
-        }
-    };
+    let cfgs = ethers_derives
+        .into_iter()
+        .map(|tts| {
+            let mut stream = TokenStream::new();
+            stream.extend(tts);
+            stream
+        })
+        .fold(TokenStream::new(), |mut stream, derive| {
+            stream.extend(quote! {
+                #[cfg_attr(feature = #feature_gate, derive(#derive))]
+            });
+            stream
+        });
     (derives, cfgs)
 }
 
@@ -319,7 +337,7 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
         let TokenTree::Group(derives) = derives.next().unwrap() else {
             panic!("should have derives");
         };
-        let (derives, cfgs) = process_derives_tt(derives, true);
+        let (derives, cfgs) = process_derives_tt(derives);
         s[3] = quote! {
             [derive(
                 #derives
@@ -441,6 +459,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: String::new(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
             (
@@ -448,6 +467,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
             (
@@ -455,6 +475,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
         ],
@@ -479,6 +500,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: String::new(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
             (
@@ -486,6 +508,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
             (
@@ -493,6 +516,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: true,
+                    ..Default::default()
                 },
             ),
         ],
@@ -521,6 +545,7 @@ fn generate_crates(
                         CargoTomlDepMeta {
                             version: String::new(),
                             optional: false,
+                            feats: vec!["ethers-derive".into()],
                         },
                     )
                 },
@@ -530,6 +555,7 @@ fn generate_crates(
                         CargoTomlDepMeta {
                             version: String::new(),
                             optional: false,
+                            feats: vec!["ethers-derive".into()],
                         },
                     )
                 },
@@ -539,6 +565,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: String::new(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
             (
@@ -546,6 +573,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
             (
@@ -553,6 +581,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
                     optional: false,
+                    ..Default::default()
                 },
             ),
         ],
