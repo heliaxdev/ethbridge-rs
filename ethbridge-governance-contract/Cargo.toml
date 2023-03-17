@@ -1,27 +1,22 @@
+[dependencies.ethbridge-governance-events]
+features = ["ethers-derive"]
+path = "../ethbridge-governance-events"
 
-[package]
-name = "ethbridge-governance-contract"
-version = "0.7.0"
-edition = "2021"
+[dependencies.ethbridge-structs]
+features = []
+path = "../ethbridge-structs"
+
+[dependencies.ethers]
+optional = false
+version = "2.0.0"
+
+[dependencies.ethers-contract]
+optional = false
+version = "2.0.0"
 
 [features]
 
-
-[dependencies]
-
-
-ethbridge-governance-events = { path = "../ethbridge-governance-events", features = ["ethers-derive"] }
-
-
-
-ethbridge-structs = { path = "../ethbridge-structs", features = [] }
-
-
-
-ethers = { version = "2.0.0", optional = false }
-
-
-
-ethers-contract = { version = "2.0.0", optional = false }
-
-
+[package]
+edition = "2021"
+name = "ethbridge-governance-contract"
+version = "0.7.1"

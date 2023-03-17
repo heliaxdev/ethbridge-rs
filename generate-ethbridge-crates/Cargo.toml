@@ -1,6 +1,6 @@
 [package]
 name = "generate-ethbridge-crates"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 
 [dependencies]
@@ -14,3 +14,4 @@ quote = "1.0.23"
 serde = { version = "1.0.152", features = ["derive"] }
 syn = { version = "1.0.109", features = ["full"] }
 tera = "1.17.1"
+toml = "0.7.3"

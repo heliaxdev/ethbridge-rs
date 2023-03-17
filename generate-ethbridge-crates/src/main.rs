@@ -651,12 +651,15 @@ fn generate_crate_template(
     tera_context.insert("dependencies", &deps.into());
     tera_context.insert("features", &feats.into());
     tera_context.insert("feature_gate_ethers", FEATURE_GATE_ETHERS);
-    let err = std::fs::write(
-        &cargo_toml_path,
-        cargo_template
+    let pretty_toml = {
+        let toml_str = cargo_template
             .render("Cargo.toml", &tera_context)
-            .context("failed to render Cargo.toml")?,
-    );
+            .context("failed to render Cargo.toml")?;
+        let table: toml::map::Map<String, toml::Value> =
+            toml::from_str(&toml_str).context("failed to deserialize toml")?;
+        toml::to_string_pretty(&table).context("failed to serialize toml")?
+    };
+    let err = std::fs::write(&cargo_toml_path, pretty_toml);
     err.with_context(|| format!("failed to create file: {}", cargo_toml_path.display()))
 }
 
