@@ -103,7 +103,6 @@ fn run() -> eyre::Result<()> {
         [(FEATURE_GATE_ETHERS.into(), vec!["ethers".into()])],
         &paths,
     )?;
-    //println!("{:#?}", structs.values().collect::<Vec<_>>());
     generate_crate_source(
         "ethbridge-structs".into(),
         &paths,
@@ -196,10 +195,10 @@ fn process_events_enum(item: &mut syn::Item) {
     }
 }
 
-// TODO: feature gate `ethevent` in `struct_.attrs[1]` and
-// the first token inside of the struct fields
 fn process_events_struct(item: &mut syn::Item) {
     if let syn::Item::Struct(struct_) = item {
+        let ethevent_before_struct = struct_.attrs.remove(1).tokens;
+
         let derives = struct_.attrs[0]
             .clone()
             .tokens
@@ -219,8 +218,31 @@ fn process_events_struct(item: &mut syn::Item) {
             (#derives)
         };
 
+        if let syn::Fields::Named(fields) = &mut struct_.fields {
+            for field in fields.named.iter_mut().filter(|f| !f.attrs.is_empty()) {
+                let mut ethevent_attr = field.attrs.remove(0);
+
+                let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+                let ethevent = ethevent_attr.tokens;
+                ethevent_attr.tokens = quote! {
+                    cfg_attr(feature = #feature_gate, ethevent #ethevent)
+                };
+                ethevent_attr.path.segments.clear();
+
+                field.attrs.insert(0, ethevent_attr);
+            }
+        }
+
         let _ = struct_;
-        add_toks_before_item(item, cfgs);
+        let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+
+        add_toks_before_item(
+            item,
+            quote! {
+                #[cfg_attr(feature = #feature_gate, ethevent #ethevent_before_struct)]
+                #cfgs
+            },
+        );
     }
 }
 
