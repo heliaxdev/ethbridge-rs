@@ -122,7 +122,7 @@ fn run() -> eyre::Result<()> {
         std::iter::once(quote! {
             #![allow(dead_code)]
         })
-        .chain(structs.into_values().flatten()),
+        .chain(structs.into_values().map(|s| s.into_token_stream())),
     )?;
 
     Ok(())
@@ -140,12 +140,8 @@ fn process_events(events: TokenStream) -> TokenStream {
     events_file.into_token_stream()
 }
 
-fn add_toks_before_item(item: &mut syn::Item, toks_before: TokenStream) {
-    let mut item_temp = syn::Item::Verbatim(TokenStream::new());
-    std::mem::swap(&mut item_temp, item);
-
-    let item_tokens = item_temp.into_token_stream();
-
+fn add_toks_before_item<I: ToTokens + syn::parse::Parse>(item: &mut I, toks_before: TokenStream) {
+    let item_tokens = item.to_token_stream();
     *item = syn::parse2(quote! {
         #toks_before
         #item_tokens
@@ -232,18 +228,7 @@ fn process_events_struct(item: &mut syn::Item) {
         };
 
         if let syn::Fields::Named(fields) = &mut struct_.fields {
-            for field in fields.named.iter_mut().filter(|f| !f.attrs.is_empty()) {
-                let mut ethevent_attr = field.attrs.remove(0);
-
-                let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
-                let ethevent = ethevent_attr.tokens;
-                ethevent_attr.tokens = quote! {
-                    cfg_attr(feature = #feature_gate, ethevent #ethevent)
-                };
-                ethevent_attr.path.segments.clear();
-
-                field.attrs.insert(0, ethevent_attr);
-            }
+            process_fields(fields);
         }
 
         let _ = struct_;
@@ -326,90 +311,84 @@ fn process_derives_tt(derives: Group) -> (TokenStream, TokenStream) {
     (derives, cfgs)
 }
 
-fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
+fn process_fields(fields: &mut syn::FieldsNamed) {
+    for field in fields.named.iter_mut() {
+        // feature gate attributes
+        if !field.attrs.is_empty() {
+            let mut ethevent_attr = field.attrs.remove(0);
+
+            let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+            let ethevent = ethevent_attr.tokens;
+            ethevent_attr.tokens = quote! {
+                cfg_attr(feature = #feature_gate, ethevent #ethevent)
+            };
+            ethevent_attr.path.segments.clear();
+
+            field.attrs.insert(0, ethevent_attr);
+        }
+
+        // use `ethabi` instead of `ethers`
+        let mut ty = field.ty.to_token_stream().into_iter().collect_vec();
+
+        let field_type_prefix = ty[0].to_string();
+        match field_type_prefix.as_str() {
+            ":" if ty.len() >= 3 && ty[2].to_string() == "ethers" => {
+                let imported_type = ty.pop().unwrap();
+                ty.clear();
+                ty.extend(
+                    quote! {
+                        ::ethabi::ethereum_types::#imported_type
+                    }
+                    .into_iter(),
+                );
+            }
+            // NOTE: handle edge cases here. hashmaps and such
+            // may be missing, if they're generated, later, on
+            // smart contract revisions
+            ":" if ty.len() >= 11 && ty[8].to_string() == "Vec" && ty[10].to_string() == ":" => {
+                ty.pop().unwrap(); // pop last bracket
+                let imported_type = ty.pop().unwrap();
+                ty.truncate(9);
+                ty.extend(quote! {
+                    <::ethabi::ethereum_types::#imported_type>
+                });
+            }
+            _ => {}
+        }
+
+        field.ty = syn::parse2(ty.into_iter().fold(TokenStream::new(), |mut stream, tt| {
+            stream.extend(std::iter::once(tt));
+            stream
+        }))
+        .expect("Should have the right syntax");
+    }
+}
+
+fn process_structs(structs: &mut BTreeMap<String, syn::ItemStruct>) {
     for s in structs.values_mut() {
         // process derives - make ethers derives optional
-        let TokenTree::Group(derives) = s[3].clone().into_iter().next().unwrap() else {
-            panic!("should have derives");
-        };
-        let mut derives = derives.stream().into_iter();
-        derives.next(); // skip first tok "derive"
-        let TokenTree::Group(derives) = derives.next().unwrap() else {
-            panic!("should have derives");
-        };
-        let (derives, cfgs) = process_derives_tt(derives);
-        s[3] = quote! {
-            [derive(
-                #derives
-            )]
-            #cfgs
-        };
-        // process fields - should use types from `ethabi` instead
-        let TokenTree::Group(fields) = s[7].clone().into_iter().next().unwrap() else {
-            panic!("should have derives");
-        };
-        let mut fields = fields
-            .stream()
+        let derives = s.attrs[1]
+            .clone()
+            .tokens
             .into_iter()
-            .group_by(|tt| {
-                if let TokenTree::Punct(p) = tt {
-                    p.as_char() == ','
+            .map(|derives_group| {
+                if let TokenTree::Group(g) = derives_group {
+                    g
                 } else {
-                    false
+                    unreachable!()
                 }
             })
-            .into_iter()
-            .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
-            .collect_vec();
-        for field in fields.iter_mut() {
-            let field_type_prefix = field[3].to_string();
-            match field_type_prefix.as_str() {
-                ":" if field.len() >= 6 && field[5].to_string() == "ethers" => {
-                    let imported_type = field.pop().unwrap();
-                    field.truncate(3);
-                    field.extend(
-                        quote! {
-                            ::ethabi::ethereum_types::#imported_type
-                        }
-                        .into_iter(),
-                    );
-                }
-                // NOTE: handle edge cases here. hashmaps and such
-                // may be missing, if they're generated, later, on
-                // smart contract revisions
-                ":" if field.len() >= 14
-                    && field[11].to_string() == "Vec"
-                    && field[13].to_string() == ":" =>
-                {
-                    field.pop().unwrap(); // pop last bracket
-                    let imported_type = field.pop().unwrap();
-                    field.truncate(12);
-                    field.extend(quote! {
-                        <::ethabi::ethereum_types::#imported_type>
-                    });
-                }
-                _ => {}
-            }
-        }
-        let fields = fields
-            .into_iter()
-            .map(|tts| {
-                let tt = tts.into_iter().map_into::<TokenStream>().fold(
-                    TokenStream::new(),
-                    |mut stream, other| {
-                        stream.extend(other);
-                        stream
-                    },
-                );
-                quote! { #tt, }
-            })
-            .fold(TokenStream::new(), |mut stream, other| {
-                stream.extend(other);
-                stream
-            });
-        s[7] = quote! {
-            { #fields }
+            .next()
+            .expect("Should have derives");
+        let (derives, cfgs) = process_derives_tt(derives);
+        s.attrs[1].tokens = quote! {
+            (#derives)
         };
+        add_toks_before_item(s, cfgs);
+        // process fields - should use types from `ethabi` instead
+        if let syn::Fields::Named(fields) = &mut s.fields {
+            process_fields(fields);
+        }
     }
 }
 
@@ -417,7 +396,7 @@ fn generate_crates(
     abi_file: &str,
     version: &str,
     paths: &Paths,
-    structs: &mut BTreeMap<String, Vec<TokenStream>>,
+    structs: &mut BTreeMap<String, syn::ItemStruct>,
 ) -> eyre::Result<()> {
     let abi_file_path = paths.abi_files_dir.join(format!("{abi_file}.abi"));
     let abi_gen = Abigen::from_file(&abi_file_path)
@@ -428,7 +407,7 @@ fn generate_crates(
         let Some(tt) = structs_iter.next() else {
             break;
         };
-        let mut tts = vec![tt.into()];
+        let mut tts: Vec<TokenStream> = vec![tt.into()];
         for _ in 0..5 {
             tts.push(
                 structs_iter
@@ -448,7 +427,15 @@ fn generate_crates(
                 .ok_or_else(|| err!("struct definition not found in generated rust code"))?
                 .into(),
         );
-        structs.insert(key, tts);
+        let struct_stream = tts
+            .into_iter()
+            .fold(TokenStream::new(), |mut stream, other| {
+                stream.extend(other.into_iter().map(TokenStream::from));
+                stream
+            });
+        let s: syn::ItemStruct =
+            syn::parse2(struct_stream).context("invalid struct has been parsed")?;
+        structs.insert(key, s);
     }
     generate_crate_template(
         get_subcrate(abi_file, "calls"),
@@ -507,7 +494,7 @@ fn generate_crates(
                 "ethers".into(),
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
-                    optional: false,
+                    optional: true,
                     ..Default::default()
                 },
             ),
@@ -519,8 +506,19 @@ fn generate_crates(
                     ..Default::default()
                 },
             ),
+            (
+                "ethabi".into(),
+                CargoTomlDepMeta {
+                    version: ETHABI_VERSION.into(),
+                    optional: false,
+                    ..Default::default()
+                },
+            ),
         ],
-        [(FEATURE_GATE_ETHERS.into(), vec!["ethers-contract".into()])],
+        [(
+            FEATURE_GATE_ETHERS.into(),
+            vec!["ethers".into(), "ethers-contract".into()],
+        )],
         paths,
     )?;
     generate_crate_source(
