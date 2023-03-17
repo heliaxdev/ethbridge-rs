@@ -13,7 +13,7 @@ use ::ethbridge_structs::*;
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToErcFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
-    pub nonce: ::ethers::core::types::U256,
+    pub nonce: ::ethabi::ethereum_types::U256,
     pub transfers: ::std::vec::Vec<Erc20Transfer>,
     pub valid_map: ::std::vec::Vec<bool>,
     pub relayer_address: ::std::string::String,
@@ -29,10 +29,10 @@ pub struct TransferToErcFilter {
 )]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToNamadaFilter {
-    pub nonce: ::ethers::core::types::U256,
+    pub nonce: ::ethabi::ethereum_types::U256,
     pub trasfers: ::std::vec::Vec<NamadaTransfer>,
     pub valid_map: ::std::vec::Vec<bool>,
-    pub confirmations: ::ethers::core::types::U256,
+    pub confirmations: ::ethabi::ethereum_types::U256,
 }
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
 #[doc = "Container type for all of the contract's events"]

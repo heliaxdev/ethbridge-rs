@@ -10,8 +10,8 @@ use ::ethbridge_structs::*;
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct NewContractFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
-    pub name: ::ethers::core::types::H256,
-    pub addr: ::ethers::core::types::Address,
+    pub name: ::ethabi::ethereum_types::H256,
+    pub addr: ::ethabi::ethereum_types::Address,
 }
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthEvent))]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
@@ -25,9 +25,9 @@ pub struct NewContractFilter {
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct UpdateBridgeWhitelistFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
-    pub nonce: ::ethers::core::types::U256,
-    pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
-    pub token_cap: ::std::vec::Vec<::ethers::core::types::U256>,
+    pub nonce: ::ethabi::ethereum_types::U256,
+    pub tokens: ::std::vec::Vec<::ethabi::ethereum_types::Address>,
+    pub token_cap: ::std::vec::Vec<::ethabi::ethereum_types::U256>,
 }
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthEvent))]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
@@ -38,8 +38,8 @@ pub struct UpdateBridgeWhitelistFilter {
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct UpgradedContractFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
-    pub name: ::ethers::core::types::H256,
-    pub addr: ::ethers::core::types::Address,
+    pub name: ::ethabi::ethereum_types::H256,
+    pub addr: ::ethabi::ethereum_types::Address,
 }
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthEvent))]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
@@ -53,7 +53,7 @@ pub struct UpgradedContractFilter {
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct ValidatorSetUpdateFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
-    pub validator_set_nonce: ::ethers::core::types::U256,
+    pub validator_set_nonce: ::ethabi::ethereum_types::U256,
     pub bridge_validatore_set_hash: [u8; 32],
     pub governance_validatore_set_hash: [u8; 32],
 }

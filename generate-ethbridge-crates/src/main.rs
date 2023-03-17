@@ -517,7 +517,11 @@ fn generate_crates(
         ],
         [(
             FEATURE_GATE_ETHERS.into(),
-            vec!["ethers".into(), "ethers-contract".into()],
+            vec![
+                "ethers".into(),
+                "ethers-contract".into(),
+                "ethbridge-structs/ethers-derive".into(),
+            ],
         )],
         paths,
     )?;
