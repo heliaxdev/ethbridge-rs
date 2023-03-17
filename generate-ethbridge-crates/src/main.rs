@@ -122,6 +122,7 @@ fn process_events(events: TokenStream) -> TokenStream {
     events_file.items.iter_mut().for_each(|item| match item {
         impl_ @ syn::Item::Impl(_) => process_events_impl(impl_),
         enum_ @ syn::Item::Enum(_) => process_events_enum(enum_),
+        struct_ @ syn::Item::Struct(_) => process_events_struct(struct_),
         _ => (),
     });
     events_file.into_token_stream()
@@ -191,6 +192,34 @@ fn process_events_enum(item: &mut syn::Item) {
         };
 
         let _ = enum_;
+        add_toks_before_item(item, cfgs);
+    }
+}
+
+// TODO: feature gate `ethevent` in `struct_.attrs[1]` and
+// the first token inside of the struct fields
+fn process_events_struct(item: &mut syn::Item) {
+    if let syn::Item::Struct(struct_) = item {
+        let derives = struct_.attrs[0]
+            .clone()
+            .tokens
+            .into_iter()
+            .map(|derives_group| {
+                if let TokenTree::Group(g) = derives_group {
+                    g
+                } else {
+                    unreachable!()
+                }
+            })
+            .next()
+            .expect("Should have derives");
+
+        let (derives, cfgs) = process_derives_tt(derives, true);
+        struct_.attrs[0].tokens = quote! {
+            (#derives)
+        };
+
+        let _ = struct_;
         add_toks_before_item(item, cfgs);
     }
 }
