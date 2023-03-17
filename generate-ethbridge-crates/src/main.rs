@@ -459,7 +459,7 @@ fn generate_crates(
                 CargoTomlDepMeta {
                     version: String::new(),
                     optional: false,
-                    ..Default::default()
+                    feats: vec!["ethers-derive".into()],
                 },
             ),
             (
