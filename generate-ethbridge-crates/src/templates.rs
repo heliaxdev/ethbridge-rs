@@ -31,7 +31,9 @@ edition = "2021"
 "#;
 
 pub fn cargo() -> tera::Tera {
-    let mut tera = tera::Tera::new("/dev/null/*").unwrap();
+    let dir = tempdir::TempDir::new("generate_ethbridge_crates").unwrap();
+    let glob = dir.as_ref().join("**");
+    let mut tera = tera::Tera::new(glob.to_str().unwrap()).unwrap();
     tera.add_raw_template("Cargo.toml", CARGO_TOML)
         .expect("must compile template");
     tera.register_function("str_has_prefix", str_has_prefix);
