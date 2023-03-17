@@ -12,25 +12,6 @@ use ::ethbridge_structs::*;
     Hash,
 )]
 #[ethevent(
-    name = "InvalidTransferToNamada",
-    abi = "InvalidTransferToNamada(address,string,uint256)"
-)]
-pub struct InvalidTransferToNamadaFilter {
-    pub from: ::ethers::core::types::Address,
-    pub to: ::std::string::String,
-    pub amount: ::ethers::core::types::U256,
-}
-#[derive(
-    Clone,
-    :: ethers_contract :: EthEvent,
-    :: ethers_contract :: EthDisplay,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-)]
-#[ethevent(
     name = "TransferToErc",
     abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
 )]
@@ -64,7 +45,6 @@ pub struct TransferToNamadaFilter {
 #[doc = "Container type for all of the contract's events"]
 #[derive(Clone, :: ethers_contract :: EthAbiType, Debug, PartialEq, Eq, Hash)]
 pub enum BridgeEvents {
-    InvalidTransferToNamadaFilter(InvalidTransferToNamadaFilter),
     TransferToErcFilter(TransferToErcFilter),
     TransferToNamadaFilter(TransferToNamadaFilter),
 }
@@ -72,9 +52,6 @@ impl ::ethers_contract::EthLogDecode for BridgeEvents {
     fn decode_log(
         log: &::ethers::core::abi::RawLog,
     ) -> ::core::result::Result<Self, ::ethers::core::abi::Error> {
-        if let Ok(decoded) = InvalidTransferToNamadaFilter::decode_log(log) {
-            return Ok(BridgeEvents::InvalidTransferToNamadaFilter(decoded));
-        }
         if let Ok(decoded) = TransferToErcFilter::decode_log(log) {
             return Ok(BridgeEvents::TransferToErcFilter(decoded));
         }
@@ -87,15 +64,9 @@ impl ::ethers_contract::EthLogDecode for BridgeEvents {
 impl ::core::fmt::Display for BridgeEvents {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         match self {
-            Self::InvalidTransferToNamadaFilter(element) => ::core::fmt::Display::fmt(element, f),
             Self::TransferToErcFilter(element) => ::core::fmt::Display::fmt(element, f),
             Self::TransferToNamadaFilter(element) => ::core::fmt::Display::fmt(element, f),
         }
-    }
-}
-impl ::core::convert::From<InvalidTransferToNamadaFilter> for BridgeEvents {
-    fn from(value: InvalidTransferToNamadaFilter) -> Self {
-        Self::InvalidTransferToNamadaFilter(value)
     }
 }
 impl ::core::convert::From<TransferToErcFilter> for BridgeEvents {
