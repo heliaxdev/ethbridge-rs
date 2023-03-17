@@ -7,7 +7,7 @@ use clap::Parser;
 use ethers_contract::Abigen;
 use eyre::{eyre as err, WrapErr};
 use itertools::Itertools;
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::{Group, TokenStream, TokenTree};
 use quote::{quote, ToTokens};
 
 use self::templates::CargoTomlDepMeta;
@@ -121,9 +121,23 @@ fn process_events(events: TokenStream) -> TokenStream {
         syn::parse2::<syn::File>(events).expect("The generated code is syntactically correct");
     events_file.items.iter_mut().for_each(|item| match item {
         impl_ @ syn::Item::Impl(_) => process_events_impl(impl_),
+        enum_ @ syn::Item::Enum(_) => process_events_enum(enum_),
         _ => (),
     });
     events_file.into_token_stream()
+}
+
+fn add_toks_before_item(item: &mut syn::Item, toks_before: TokenStream) {
+    let mut item_temp = syn::Item::Verbatim(TokenStream::new());
+    std::mem::swap(&mut item_temp, item);
+
+    let item_tokens = item_temp.into_token_stream();
+
+    *item = syn::parse2(quote! {
+        #toks_before
+        #item_tokens
+    })
+    .expect("Should have the right syntax");
 }
 
 fn process_events_impl(item: &mut syn::Item) {
@@ -135,9 +149,8 @@ fn process_events_impl(item: &mut syn::Item) {
             .trait_
             .as_ref()
             .map(|(_, path, _)| {
-                path.to_token_stream()
-                    .to_string()
-                    .contains("ethers_contract")
+                let path = path.to_token_stream().to_string();
+                path.contains("ethers_contract") || path.contains("Display")
             })
             .unwrap_or(false)
     };
@@ -147,17 +160,101 @@ fn process_events_impl(item: &mut syn::Item) {
         return;
     }
 
-    let mut item_temp = syn::Item::Verbatim(TokenStream::new());
-    std::mem::swap(&mut item_temp, item);
-
-    let item_tokens = item_temp.into_token_stream();
     let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+    add_toks_before_item(
+        item,
+        quote! {
+            #[cfg(feature = #feature_gate)]
+        },
+    );
+}
 
-    *item = syn::parse2(quote! {
-        #[cfg(feature = #feature_gate)]
-        #item_tokens
-    })
-    .expect("Should have the right syntax");
+fn process_events_enum(item: &mut syn::Item) {
+    if let syn::Item::Enum(enum_) = item {
+        let derives = enum_.attrs[1]
+            .clone()
+            .tokens
+            .into_iter()
+            .map(|derives_group| {
+                if let TokenTree::Group(g) = derives_group {
+                    g
+                } else {
+                    unreachable!()
+                }
+            })
+            .next()
+            .expect("Should have derives");
+
+        let (derives, cfgs) = process_derives_tt(derives, false);
+        enum_.attrs[1].tokens = quote! {
+            (#derives)
+        };
+
+        let _ = enum_;
+        add_toks_before_item(item, cfgs);
+    }
+}
+
+fn process_derives_tt(derives: Group, with_codec: bool) -> (TokenStream, TokenStream) {
+    let mut derives = derives
+        .stream()
+        .into_iter()
+        .group_by(|tt| {
+            if let TokenTree::Punct(p) = tt {
+                p.as_char() == ','
+            } else {
+                false
+            }
+        })
+        .into_iter()
+        .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
+        .collect_vec();
+    for derive in derives.iter_mut() {
+        if derive.len() == 1 {
+            continue;
+        }
+        if derive[0].to_string() != ":" {
+            continue;
+        }
+        if derive[1].to_string() != ":" {
+            continue;
+        }
+        if derive[2].to_string() != "ethers_contract" {
+            continue;
+        }
+        derive.clear();
+    }
+    let derives = derives
+        .into_iter()
+        .filter_map(|tts| {
+            if tts.is_empty() {
+                return None;
+            }
+            let tt = tts.into_iter().map_into::<TokenStream>().fold(
+                TokenStream::new(),
+                |mut stream, other| {
+                    stream.extend(other);
+                    stream
+                },
+            );
+            Some(quote! { #tt, })
+        })
+        .fold(TokenStream::new(), |mut stream, other| {
+            stream.extend(other);
+            stream
+        });
+    let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+    let cfgs = if with_codec {
+        quote! {
+            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiType))]
+            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiCodec))]
+        }
+    } else {
+        quote! {
+            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiType))]
+        }
+    };
+    (derives, cfgs)
 }
 
 fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
@@ -171,60 +268,12 @@ fn process_structs(structs: &mut BTreeMap<String, Vec<TokenStream>>) {
         let TokenTree::Group(derives) = derives.next().unwrap() else {
             panic!("should have derives");
         };
-        let mut derives = derives
-            .stream()
-            .into_iter()
-            .group_by(|tt| {
-                if let TokenTree::Punct(p) = tt {
-                    p.as_char() == ','
-                } else {
-                    false
-                }
-            })
-            .into_iter()
-            .filter_map(|(is_comma, g)| (!is_comma).then_some(g.collect_vec()))
-            .collect_vec();
-        for derive in derives.iter_mut() {
-            if derive.len() == 1 {
-                continue;
-            }
-            if derive[0].to_string() != ":" {
-                continue;
-            }
-            if derive[1].to_string() != ":" {
-                continue;
-            }
-            if derive[2].to_string() != "ethers_contract" {
-                continue;
-            }
-            derive.clear();
-        }
-        let derives = derives
-            .into_iter()
-            .filter_map(|tts| {
-                if tts.is_empty() {
-                    return None;
-                }
-                let tt = tts.into_iter().map_into::<TokenStream>().fold(
-                    TokenStream::new(),
-                    |mut stream, other| {
-                        stream.extend(other);
-                        stream
-                    },
-                );
-                Some(quote! { #tt, })
-            })
-            .fold(TokenStream::new(), |mut stream, other| {
-                stream.extend(other);
-                stream
-            });
-        let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+        let (derives, cfgs) = process_derives_tt(derives, true);
         s[3] = quote! {
             [derive(
                 #derives
             )]
-            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiType))]
-            #[cfg_attr(feature = #feature_gate, derive(::ethers::contract::EthAbiCodec))]
+            #cfgs
         };
         // process fields - should use types from `ethabi` instead
         let TokenTree::Group(fields) = s[7].clone().into_iter().next().unwrap() else {
