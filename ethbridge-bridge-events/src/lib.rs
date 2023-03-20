@@ -74,3 +74,29 @@ impl ::core::convert::From<TransferToNamadaFilter> for BridgeEvents {
         Self::TransferToNamadaFilter(value)
     }
 }
+#[doc = r" Retrieve all ABI event signatures."]
+#[cfg(feature = "ethers-derive")]
+pub fn abi_signatures() -> Vec<&'static str> {
+    vec![
+        {
+            use ::ethers_contract::EthEvent;
+            match TransferToErcFilter::abi_signature() {
+                ::std::borrow::Cow::Borrowed(s) => s,
+                _ => unreachable!(
+                    "The Ethereum event ABI def for {} should be static",
+                    TransferToErcFilter::name()
+                ),
+            }
+        },
+        {
+            use ::ethers_contract::EthEvent;
+            match TransferToNamadaFilter::abi_signature() {
+                ::std::borrow::Cow::Borrowed(s) => s,
+                _ => unreachable!(
+                    "The Ethereum event ABI def for {} should be static",
+                    TransferToNamadaFilter::name()
+                ),
+            }
+        },
+    ]
+}

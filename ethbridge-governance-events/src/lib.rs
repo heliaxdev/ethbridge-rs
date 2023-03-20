@@ -117,3 +117,49 @@ impl ::core::convert::From<ValidatorSetUpdateFilter> for GovernanceEvents {
         Self::ValidatorSetUpdateFilter(value)
     }
 }
+#[doc = r" Retrieve all ABI event signatures."]
+#[cfg(feature = "ethers-derive")]
+pub fn abi_signatures() -> Vec<&'static str> {
+    vec![
+        {
+            use ::ethers_contract::EthEvent;
+            match NewContractFilter::abi_signature() {
+                ::std::borrow::Cow::Borrowed(s) => s,
+                _ => unreachable!(
+                    "The Ethereum event ABI def for {} should be static",
+                    NewContractFilter::name()
+                ),
+            }
+        },
+        {
+            use ::ethers_contract::EthEvent;
+            match UpdateBridgeWhitelistFilter::abi_signature() {
+                ::std::borrow::Cow::Borrowed(s) => s,
+                _ => unreachable!(
+                    "The Ethereum event ABI def for {} should be static",
+                    UpdateBridgeWhitelistFilter::name()
+                ),
+            }
+        },
+        {
+            use ::ethers_contract::EthEvent;
+            match UpgradedContractFilter::abi_signature() {
+                ::std::borrow::Cow::Borrowed(s) => s,
+                _ => unreachable!(
+                    "The Ethereum event ABI def for {} should be static",
+                    UpgradedContractFilter::name()
+                ),
+            }
+        },
+        {
+            use ::ethers_contract::EthEvent;
+            match ValidatorSetUpdateFilter::abi_signature() {
+                ::std::borrow::Cow::Borrowed(s) => s,
+                _ => unreachable!(
+                    "The Ethereum event ABI def for {} should be static",
+                    ValidatorSetUpdateFilter::name()
+                ),
+            }
+        },
+    ]
+}

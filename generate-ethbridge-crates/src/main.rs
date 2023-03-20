@@ -1,6 +1,6 @@
 mod templates;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -131,13 +131,40 @@ fn run() -> eyre::Result<()> {
 fn process_events(events: TokenStream) -> TokenStream {
     let mut events_file =
         syn::parse2::<syn::File>(events).expect("The generated code is syntactically correct");
+    let mut all_events = BTreeSet::new();
     events_file.items.iter_mut().for_each(|item| match item {
         impl_ @ syn::Item::Impl(_) => process_events_impl(impl_),
         enum_ @ syn::Item::Enum(_) => process_events_enum(enum_),
-        struct_ @ syn::Item::Struct(_) => process_events_struct(struct_),
+        struct_ @ syn::Item::Struct(_) => process_events_struct(struct_, &mut all_events),
         _ => (),
     });
-    events_file.into_token_stream()
+    let event_defs = events_file.into_token_stream();
+    let all_events = all_events
+        .into_iter()
+        .fold(TokenStream::new(), |mut stream, event_ident| {
+            stream.extend(quote! {
+                {
+                    use ::ethers_contract::EthEvent;
+                    match #event_ident :: abi_signature() {
+                        ::std::borrow::Cow::Borrowed(s) => s,
+                        _ => unreachable!("The Ethereum event ABI def for {} should be static", #event_ident :: name()),
+                    }
+                },
+            });
+            stream
+        });
+    let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
+    quote! {
+        #event_defs
+
+        /// Retrieve all ABI event signatures.
+        #[cfg(feature = #feature_gate)]
+        pub fn abi_signatures() -> Vec<&'static str> {
+            vec![
+                #all_events
+            ]
+        }
+    }
 }
 
 fn add_toks_before_item<I: ToTokens + syn::parse::Parse>(item: &mut I, toks_before: TokenStream) {
@@ -204,8 +231,10 @@ fn process_events_enum(item: &mut syn::Item) {
     }
 }
 
-fn process_events_struct(item: &mut syn::Item) {
+fn process_events_struct(item: &mut syn::Item, all_events: &mut BTreeSet<syn::Ident>) {
     if let syn::Item::Struct(struct_) = item {
+        all_events.insert(struct_.ident.clone());
+
         let ethevent_before_struct = struct_.attrs.remove(1).tokens;
 
         let derives = struct_.attrs[0]
