@@ -54,8 +54,8 @@ pub struct UpgradedContractFilter {
 pub struct ValidatorSetUpdateFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
     pub validator_set_nonce: ::ethabi::ethereum_types::U256,
-    pub bridge_validatore_set_hash: [u8; 32],
-    pub governance_validatore_set_hash: [u8; 32],
+    pub bridge_validator_set_hash: [u8; 32],
+    pub governance_validator_set_hash: [u8; 32],
 }
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
 #[doc = "Container type for all of the contract's events"]
