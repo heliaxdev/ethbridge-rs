@@ -30,7 +30,7 @@ pub struct TransferToErcFilter {
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToNamadaFilter {
     pub nonce: ::ethabi::ethereum_types::U256,
-    pub trasfers: ::std::vec::Vec<NamadaTransfer>,
+    pub transfers: ::std::vec::Vec<NamadaTransfer>,
     pub valid_map: ::std::vec::Vec<bool>,
     pub confirmations: ::ethabi::ethereum_types::U256,
 }
