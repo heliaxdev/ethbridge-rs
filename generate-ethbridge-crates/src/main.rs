@@ -7,7 +7,7 @@ use clap::Parser;
 use ethers_contract::Abigen;
 use eyre::{eyre as err, WrapErr};
 use itertools::Itertools;
-use proc_macro2::{Group, TokenStream, TokenTree};
+use proc_macro2::{Group, Span, TokenStream, TokenTree};
 use quote::{quote, ToTokens};
 
 use self::templates::CargoTomlDepMeta;
@@ -22,6 +22,12 @@ struct Paths {
     output_dir: PathBuf,
     /// Path to the ABI files directory.
     abi_files_dir: PathBuf,
+}
+
+#[derive(Debug, Default)]
+struct AllEvents {
+    bridge: BTreeSet<syn::Ident>,
+    governance: BTreeSet<syn::Ident>,
 }
 
 /// Generate Ethereum bridge Rust types compatible with Namada's
@@ -76,9 +82,16 @@ fn run() -> eyre::Result<()> {
     }
 
     let mut structs = BTreeMap::new();
+    let mut events = AllEvents::default();
 
-    generate_crates("Bridge", &crate_version, &paths, &mut structs)?;
-    generate_crates("Governance", &crate_version, &paths, &mut structs)?;
+    generate_crates("Bridge", &crate_version, &paths, &mut structs, &mut events)?;
+    generate_crates(
+        "Governance",
+        &crate_version,
+        &paths,
+        &mut structs,
+        &mut events,
+    )?;
 
     process_structs(&mut structs);
     generate_crate_template(
@@ -125,22 +138,171 @@ fn run() -> eyre::Result<()> {
         .chain(structs.into_values().map(|s| s.into_token_stream())),
     )?;
 
+    generate_events_crate(&paths, &crate_version, events)?;
+
     Ok(())
 }
 
-fn process_events(events: TokenStream) -> TokenStream {
+fn generate_events_crate(
+    paths: &Paths,
+    crate_version: &str,
+    events: AllEvents,
+) -> eyre::Result<()> {
+    generate_crate_template(
+        "ethbridge-events".into(),
+        crate_version,
+        [
+            (
+                "ethers".into(),
+                CargoTomlDepMeta {
+                    version: ETHERS_VERSION.into(),
+                    optional: false,
+                    ..Default::default()
+                },
+            ),
+            (
+                "ethbridge-bridge-events".into(),
+                CargoTomlDepMeta {
+                    version: String::new(),
+                    optional: false,
+                    feats: vec!["ethers-derive".into()],
+                },
+            ),
+            (
+                "ethbridge-governance-events".into(),
+                CargoTomlDepMeta {
+                    version: String::new(),
+                    optional: false,
+                    feats: vec!["ethers-derive".into()],
+                },
+            ),
+        ],
+        [],
+        paths,
+    )?;
+    let all_dyn_events = events
+        .bridge
+        .iter()
+        .chain(events.governance.iter())
+        .map(|event_name| {
+            quote! {
+                &::std::marker::PhantomData::<#event_name>,
+            }
+        })
+        .fold(TokenStream::new(), |mut stream, other| {
+            stream.extend(other);
+            stream
+        });
+    let event_codec_impls = [("Bridge", events.bridge), ("Governance", events.governance)]
+        .into_iter()
+        .map(|(kind, events)| {
+            let kind_events =
+                syn::Ident::new(&format!("{kind}Events"), Span::call_site()).to_token_stream();
+            let kind = syn::Ident::new(kind, Span::call_site()).to_token_stream();
+            events
+                .into_iter()
+                .fold(TokenStream::new(), |mut stream, event_ident| {
+                    stream.extend(quote! {
+                        impl EventCodec for ::std::marker::PhantomData<#event_ident> {
+                            fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
+                                #event_ident :: abi_signature()
+                            }
+
+                            fn kind(&self) -> EventKind {
+                                EventKind :: #kind
+                            }
+
+                            fn decode(&self, data: &[u8]) -> Result<Events, ::ethers::abi::Error> {
+                                let param = #event_ident :: param_type();
+                                ::ethers::abi::decode(&[param], data).and_then(|mut toks| {
+                                    let tok = toks.remove(0);
+                                    let event = #event_ident :: from_token(tok)
+                                        .map_err(|e| {
+                                            ::ethers::abi::Error::Other(
+                                                ::std::borrow::Cow::Owned(e.to_string())
+                                            )
+                                        })?;
+                                    Ok(Events :: #kind (
+                                        #kind_events :: #event_ident ( event )
+                                    ))
+                                })
+                            }
+                        }
+                    });
+                    stream
+                })
+        })
+        .fold(TokenStream::new(), |mut stream, other| {
+            stream.extend(other);
+            stream
+        });
+    generate_crate_source(
+        "ethbridge-events".into(),
+        paths,
+        std::iter::once(quote! {
+            #![allow(dead_code)]
+            #![allow(unused_imports)]
+
+            use ::ethbridge_bridge_events::*;
+            use ::ethbridge_governance_events::*;
+            use ::ethers::contract::EthEvent;
+            use ::ethers::abi::AbiType;
+            use ::ethers::abi::Tokenizable;
+
+            ///Codec to deserialize Ethereum events.
+            pub trait EventCodec {
+                ///ABI signature of the Ethereum event.
+                fn event_signature(&self) -> ::std::borrow::Cow<'static, str>;
+
+                ///The kind of event (Bridge or Governance).
+                fn kind(&self) -> EventKind;
+
+                ///Decode an Ethereum event.
+                fn decode(&self, data: &[u8]) -> Result<Events, ::ethers::abi::Error>;
+            }
+
+            #event_codec_impls
+
+            ///Return all Ethereum event codecs.
+            pub fn event_codecs() -> &'static [&'static dyn EventCodec] {
+                &[#all_dyn_events]
+            }
+
+            ///The Ethereum events generated by `ethbridge-rs`.
+            #[derive(Debug)]
+            pub enum Events {
+                /// Bridge events.
+                Bridge(BridgeEvents),
+                /// Governance events.
+                Governance(GovernanceEvents),
+            }
+
+            ///The kinds of Ethereum events generated by `ethbridge-rs`.
+            #[derive(Debug)]
+            pub enum EventKind {
+                /// Bridge events.
+                Bridge,
+                /// Governance events.
+                Governance,
+            }
+        }),
+    )?;
+    Ok(())
+}
+
+fn process_events(events: TokenStream, all_events: &mut BTreeSet<syn::Ident>) -> TokenStream {
     let mut events_file =
         syn::parse2::<syn::File>(events).expect("The generated code is syntactically correct");
-    let mut all_events = BTreeSet::new();
     events_file.items.iter_mut().for_each(|item| match item {
         impl_ @ syn::Item::Impl(_) => process_events_impl(impl_),
         enum_ @ syn::Item::Enum(_) => process_events_enum(enum_),
-        struct_ @ syn::Item::Struct(_) => process_events_struct(struct_, &mut all_events),
+        struct_ @ syn::Item::Struct(_) => process_events_struct(struct_, all_events),
         _ => (),
     });
     let event_defs = events_file.into_token_stream();
     let all_events = all_events
-        .into_iter()
+        .iter()
+        .cloned()
         .fold(TokenStream::new(), |mut stream, event_ident| {
             stream.extend(quote! {
                 {
@@ -157,7 +319,7 @@ fn process_events(events: TokenStream) -> TokenStream {
     quote! {
         #event_defs
 
-        /// Retrieve all ABI event signatures.
+        ///Retrieve all ABI event signatures.
         #[cfg(feature = #feature_gate)]
         pub fn abi_signatures() -> Vec<&'static str> {
             vec![
@@ -426,6 +588,7 @@ fn generate_crates(
     version: &str,
     paths: &Paths,
     structs: &mut BTreeMap<String, syn::ItemStruct>,
+    events: &mut AllEvents,
 ) -> eyre::Result<()> {
     let abi_file_path = paths.abi_files_dir.join(format!("{abi_file}.abi"));
     let abi_gen = Abigen::from_file(&abi_file_path)
@@ -554,6 +717,7 @@ fn generate_crates(
         )],
         paths,
     )?;
+    let mut all_events = BTreeSet::new();
     generate_crate_source(
         get_subcrate(abi_file, "events"),
         paths,
@@ -562,8 +726,21 @@ fn generate_crates(
             #![allow(unused_imports)]
             use ::ethbridge_structs::*;
         })
-        .chain(process_events(abi.events).into_iter().map(|tt| tt.into())),
+        .chain(
+            process_events(abi.events, &mut all_events)
+                .into_iter()
+                .map(|tt| tt.into()),
+        ),
     )?;
+    dispatch_on_abi(
+        abi_file,
+        || {
+            events.bridge.extend(all_events.iter().cloned());
+        },
+        || {
+            events.governance.extend(all_events.iter().cloned());
+        },
+    );
     generate_crate_template(
         get_subcrate(abi_file, "contract"),
         version,
