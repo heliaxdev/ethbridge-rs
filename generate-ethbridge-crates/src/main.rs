@@ -212,20 +212,14 @@ fn generate_events_crate(
                                 EventKind :: #kind
                             }
 
-                            fn decode(&self, data: &[u8]) -> Result<Events, ::ethers::abi::Error> {
-                                let param = #event_ident :: param_type();
-                                ::ethers::abi::decode(&[param], data).and_then(|mut toks| {
-                                    let tok = toks.remove(0);
-                                    let event = #event_ident :: from_token(tok)
-                                        .map_err(|e| {
-                                            ::ethers::abi::Error::Other(
-                                                ::std::borrow::Cow::Owned(e.to_string())
-                                            )
-                                        })?;
-                                    Ok(Events :: #kind (
-                                        #kind_events :: #event_ident ( event )
-                                    ))
-                                })
+                            fn decode(
+                                &self,
+                                log: &::ethers::abi::RawLog,
+                            ) -> Result<Events, ::ethers::abi::Error> {
+                                let event = #event_ident :: decode_log(log)?;
+                                Ok(Events :: #kind (
+                                    #kind_events :: #event_ident ( event )
+                                ))
                             }
                         }
                     });
@@ -246,8 +240,6 @@ fn generate_events_crate(
             use ::ethbridge_bridge_events::*;
             use ::ethbridge_governance_events::*;
             use ::ethers::contract::EthEvent;
-            use ::ethers::abi::AbiType;
-            use ::ethers::abi::Tokenizable;
 
             ///Codec to deserialize Ethereum events.
             pub trait EventCodec {
@@ -258,7 +250,10 @@ fn generate_events_crate(
                 fn kind(&self) -> EventKind;
 
                 ///Decode an Ethereum event.
-                fn decode(&self, data: &[u8]) -> Result<Events, ::ethers::abi::Error>;
+                fn decode(
+                    &self,
+                    log: &::ethers::abi::RawLog,
+                ) -> Result<Events, ::ethers::abi::Error>;
             }
 
             #event_codec_impls
