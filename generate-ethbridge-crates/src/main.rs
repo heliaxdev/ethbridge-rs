@@ -406,10 +406,6 @@ fn process_events_struct(item: &mut syn::Item, all_events: &mut BTreeSet<syn::Id
             quote! {
                 #cfgs
                 #[cfg_attr(feature = #feature_gate, ethevent #ethevent_before_struct)]
-                #[cfg_attr(
-                    feature = #feature_gate,
-                    derive(::ethers_contract::EthAbiCodec)
-                )]
             },
         );
     }
