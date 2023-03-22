@@ -93,6 +93,17 @@ fn run() -> eyre::Result<()> {
         &mut events,
     )?;
 
+    generate_structs_crate(&paths, &crate_version, structs)?;
+    generate_events_crate(&paths, &crate_version, events)?;
+
+    Ok(())
+}
+
+fn generate_structs_crate(
+    paths: &Paths,
+    crate_version: &str,
+    mut structs: BTreeMap<String, syn::ItemStruct>,
+) -> eyre::Result<()> {
     process_structs(&mut structs);
     generate_crate_template(
         "ethbridge-structs".into(),
@@ -137,9 +148,6 @@ fn run() -> eyre::Result<()> {
         })
         .chain(structs.into_values().map(|s| s.into_token_stream())),
     )?;
-
-    generate_events_crate(&paths, &crate_version, events)?;
-
     Ok(())
 }
 
