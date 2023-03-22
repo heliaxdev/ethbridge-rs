@@ -10,6 +10,7 @@ use ::ethbridge_structs::*;
         abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
     )
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToErcFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
@@ -27,6 +28,7 @@ pub struct TransferToErcFilter {
         abi = "TransferToNamada(uint256,(address,uint256,string)[],bool[],uint256)"
     )
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToNamadaFilter {
     pub nonce: ::ethabi::ethereum_types::U256,
@@ -73,30 +75,4 @@ impl ::core::convert::From<TransferToNamadaFilter> for BridgeEvents {
     fn from(value: TransferToNamadaFilter) -> Self {
         Self::TransferToNamadaFilter(value)
     }
-}
-#[doc = r"Retrieve all ABI event signatures."]
-#[cfg(feature = "ethers-derive")]
-pub fn abi_signatures() -> Vec<&'static str> {
-    vec![
-        {
-            use ::ethers_contract::EthEvent;
-            match TransferToErcFilter::abi_signature() {
-                ::std::borrow::Cow::Borrowed(s) => s,
-                _ => unreachable!(
-                    "The Ethereum event ABI def for {} should be static",
-                    TransferToErcFilter::name()
-                ),
-            }
-        },
-        {
-            use ::ethers_contract::EthEvent;
-            match TransferToNamadaFilter::abi_signature() {
-                ::std::borrow::Cow::Borrowed(s) => s,
-                _ => unreachable!(
-                    "The Ethereum event ABI def for {} should be static",
-                    TransferToNamadaFilter::name()
-                ),
-            }
-        },
-    ]
 }

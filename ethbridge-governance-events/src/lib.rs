@@ -7,6 +7,7 @@ use ::ethbridge_structs::*;
     feature = "ethers-derive",
     ethevent(name = "NewContract", abi = "NewContract(string,address)")
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct NewContractFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
@@ -22,6 +23,7 @@ pub struct NewContractFilter {
         abi = "UpdateBridgeWhitelist(uint256,address[],uint256[])"
     )
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct UpdateBridgeWhitelistFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
@@ -35,6 +37,7 @@ pub struct UpdateBridgeWhitelistFilter {
     feature = "ethers-derive",
     ethevent(name = "UpgradedContract", abi = "UpgradedContract(string,address)")
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct UpgradedContractFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
@@ -50,6 +53,7 @@ pub struct UpgradedContractFilter {
         abi = "ValidatorSetUpdate(uint256,bytes32,bytes32)"
     )
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct ValidatorSetUpdateFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
@@ -116,50 +120,4 @@ impl ::core::convert::From<ValidatorSetUpdateFilter> for GovernanceEvents {
     fn from(value: ValidatorSetUpdateFilter) -> Self {
         Self::ValidatorSetUpdateFilter(value)
     }
-}
-#[doc = r"Retrieve all ABI event signatures."]
-#[cfg(feature = "ethers-derive")]
-pub fn abi_signatures() -> Vec<&'static str> {
-    vec![
-        {
-            use ::ethers_contract::EthEvent;
-            match NewContractFilter::abi_signature() {
-                ::std::borrow::Cow::Borrowed(s) => s,
-                _ => unreachable!(
-                    "The Ethereum event ABI def for {} should be static",
-                    NewContractFilter::name()
-                ),
-            }
-        },
-        {
-            use ::ethers_contract::EthEvent;
-            match UpdateBridgeWhitelistFilter::abi_signature() {
-                ::std::borrow::Cow::Borrowed(s) => s,
-                _ => unreachable!(
-                    "The Ethereum event ABI def for {} should be static",
-                    UpdateBridgeWhitelistFilter::name()
-                ),
-            }
-        },
-        {
-            use ::ethers_contract::EthEvent;
-            match UpgradedContractFilter::abi_signature() {
-                ::std::borrow::Cow::Borrowed(s) => s,
-                _ => unreachable!(
-                    "The Ethereum event ABI def for {} should be static",
-                    UpgradedContractFilter::name()
-                ),
-            }
-        },
-        {
-            use ::ethers_contract::EthEvent;
-            match ValidatorSetUpdateFilter::abi_signature() {
-                ::std::borrow::Cow::Borrowed(s) => s,
-                _ => unreachable!(
-                    "The Ethereum event ABI def for {} should be static",
-                    ValidatorSetUpdateFilter::name()
-                ),
-            }
-        },
-    ]
 }
