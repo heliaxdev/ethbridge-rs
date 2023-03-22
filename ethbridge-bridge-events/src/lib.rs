@@ -10,6 +10,7 @@ use ::ethbridge_structs::*;
         abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
     )
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToErcFilter {
     #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
@@ -27,6 +28,7 @@ pub struct TransferToErcFilter {
         abi = "TransferToNamada(uint256,(address,uint256,string)[],bool[],uint256)"
     )
 )]
+#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct TransferToNamadaFilter {
     pub nonce: ::ethabi::ethereum_types::U256,
