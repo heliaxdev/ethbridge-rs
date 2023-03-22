@@ -294,34 +294,7 @@ fn process_events(events: TokenStream, all_events: &mut BTreeSet<syn::Ident>) ->
         struct_ @ syn::Item::Struct(_) => process_events_struct(struct_, all_events),
         _ => (),
     });
-    let event_defs = events_file.into_token_stream();
-    let all_events = all_events
-        .iter()
-        .cloned()
-        .fold(TokenStream::new(), |mut stream, event_ident| {
-            stream.extend(quote! {
-                {
-                    use ::ethers_contract::EthEvent;
-                    match #event_ident :: abi_signature() {
-                        ::std::borrow::Cow::Borrowed(s) => s,
-                        _ => unreachable!("The Ethereum event ABI def for {} should be static", #event_ident :: name()),
-                    }
-                },
-            });
-            stream
-        });
-    let feature_gate = FEATURE_GATE_ETHERS.to_token_stream();
-    quote! {
-        #event_defs
-
-        ///Retrieve all ABI event signatures.
-        #[cfg(feature = #feature_gate)]
-        pub fn abi_signatures() -> Vec<&'static str> {
-            vec![
-                #all_events
-            ]
-        }
-    }
+    events_file.into_token_stream()
 }
 
 fn add_toks_before_item<I: ToTokens + syn::parse::Parse>(item: &mut I, toks_before: TokenStream) {
