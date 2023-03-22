@@ -1,16 +1,12 @@
+[dependencies.ethbridge-bridge-events]
+features = ["ethers-derive"]
+path = "../ethbridge-bridge-events"
+
 [dependencies.ethbridge-governance-events]
 features = ["ethers-derive"]
 path = "../ethbridge-governance-events"
 
-[dependencies.ethbridge-structs]
-features = []
-path = "../ethbridge-structs"
-
 [dependencies.ethers]
-optional = false
-version = "2.0.0"
-
-[dependencies.ethers-contract]
 optional = false
 version = "2.0.0"
 
@@ -18,5 +14,5 @@ version = "2.0.0"
 
 [package]
 edition = "2021"
-name = "ethbridge-governance-contract"
+name = "ethbridge-events"
 version = "0.11.0"

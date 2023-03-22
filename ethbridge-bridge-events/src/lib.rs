@@ -74,7 +74,7 @@ impl ::core::convert::From<TransferToNamadaFilter> for BridgeEvents {
         Self::TransferToNamadaFilter(value)
     }
 }
-#[doc = r" Retrieve all ABI event signatures."]
+#[doc = r"Retrieve all ABI event signatures."]
 #[cfg(feature = "ethers-derive")]
 pub fn abi_signatures() -> Vec<&'static str> {
     vec![

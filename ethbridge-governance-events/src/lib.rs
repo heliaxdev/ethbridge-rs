@@ -117,7 +117,7 @@ impl ::core::convert::From<ValidatorSetUpdateFilter> for GovernanceEvents {
         Self::ValidatorSetUpdateFilter(value)
     }
 }
-#[doc = r" Retrieve all ABI event signatures."]
+#[doc = r"Retrieve all ABI event signatures."]
 #[cfg(feature = "ethers-derive")]
 pub fn abi_signatures() -> Vec<&'static str> {
     vec![
