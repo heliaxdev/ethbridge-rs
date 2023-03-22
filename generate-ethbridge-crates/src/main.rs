@@ -107,7 +107,7 @@ fn generate_structs_crate(
     process_structs(&mut structs);
     generate_crate_template(
         "ethbridge-structs".into(),
-        &crate_version,
+        crate_version,
         [
             (
                 "ethabi".into(),
@@ -138,11 +138,11 @@ fn generate_structs_crate(
             FEATURE_GATE_ETHERS.into(),
             vec!["ethers".into(), "ethers-contract".into()],
         )],
-        &paths,
+        paths,
     )?;
     generate_crate_source(
         "ethbridge-structs".into(),
-        &paths,
+        paths,
         std::iter::once(quote! {
             #![allow(dead_code)]
         })
