@@ -24,4 +24,4 @@ ethers-derive = [
 [package]
 edition = "2021"
 name = "ethbridge-governance-events"
-version = "0.15.0"
+version = "0.15.1"
