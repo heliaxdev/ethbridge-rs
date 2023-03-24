@@ -220,6 +220,17 @@ fn generate_events_crate(
                 .into_iter()
                 .fold(TokenStream::new(), |mut stream, event_ident| {
                     stream.extend(quote! {
+                        impl TryFrom<Events> for #event_ident {
+                            type Error = ();
+
+                            fn try_from(ev: Events) -> Result<Self, ()> {
+                                match ev {
+                                    Events::#kind(#kind_events::#event_ident(ev)) => Ok(ev),
+                                    _ => Err(()),
+                                }
+                            }
+                        }
+
                         impl EventCodec for ::std::marker::PhantomData<#event_ident> {
                             fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
                                 #event_ident :: abi_signature()
