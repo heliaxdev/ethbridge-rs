@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.1.4", features = ["derive"] }
+convert_case = "0.6.0"
 ethers-contract = { version = "2.0.0", features = ["abigen"] }
 eyre = "0.6.8"
 false = "0.0.0"

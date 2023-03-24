@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use clap::Parser;
+use convert_case::{Case, Casing};
 use ethers_contract::Abigen;
 use eyre::{eyre as err, WrapErr};
 use itertools::Itertools;
@@ -202,8 +203,9 @@ fn generate_events_crate(
         .iter()
         .chain(events.governance.iter())
         .map(|event_name| {
+            let codec_ident = get_codec_ident(event_name).to_token_stream();
             quote! {
-                &::std::marker::PhantomData::<#event_name>,
+                #codec_ident,
             }
         })
         .fold(TokenStream::new(), |mut stream, other| {
@@ -219,7 +221,14 @@ fn generate_events_crate(
             events
                 .into_iter()
                 .fold(TokenStream::new(), |mut stream, event_ident| {
+                    let codec_ident = get_codec_ident(&event_ident).to_token_stream();
+                    let docstring =
+                        format!("Event codec for [`{event_ident}`].").into_token_stream();
                     stream.extend(quote! {
+                        #[doc = #docstring]
+                        pub const #codec_ident: &'static dyn EventCodec =
+                            &::std::marker::PhantomData::<#event_ident>;
+
                         impl TryFrom<Events> for #event_ident {
                             type Error = ();
 
@@ -911,4 +920,14 @@ fn get_subcrate(abi_file: &str, suffix: &str) -> String {
 
 fn download_abi_files(_tag: String, _paths: &Paths) -> eyre::Result<()> {
     eyre::bail!("downloading of ABI artifacts is not implemented yet")
+}
+
+fn get_codec_ident(event_ident: &syn::Ident) -> syn::Ident {
+    syn::Ident::new(
+        &event_ident
+            .to_string()
+            .replace("Filter", "Codec")
+            .to_case(Case::UpperSnake),
+        Span::call_site(),
+    )
 }
