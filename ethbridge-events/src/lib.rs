@@ -5,6 +5,8 @@ use ::ethbridge_governance_events::*;
 use ::ethers::abi::AbiDecode;
 use ::ethers::contract::{AbiError, EthEvent};
 use ::smallvec::{smallvec, SmallVec};
+#[doc = r"[`EventCodec`] as a static reference trait object."]
+pub type DynEventCodec = &'static (dyn EventCodec + Sync);
 #[doc = r"Codec to deserialize Ethereum events."]
 pub trait EventCodec {
     #[doc = r"ABI signature of the Ethereum event."]
@@ -15,7 +17,7 @@ pub trait EventCodec {
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError>;
 }
 #[doc = "Event codec for [`TransferToErcFilter`]."]
-pub const TRANSFER_TO_ERC_CODEC: &'static dyn EventCodec =
+pub static TRANSFER_TO_ERC_CODEC: DynEventCodec =
     &::std::marker::PhantomData::<TransferToErcFilter>;
 impl TryFrom<Events> for TransferToErcFilter {
     type Error = ();
@@ -55,7 +57,7 @@ impl EventCodec for ::std::marker::PhantomData<TransferToErcFilter> {
     }
 }
 #[doc = "Event codec for [`TransferToNamadaFilter`]."]
-pub const TRANSFER_TO_NAMADA_CODEC: &'static dyn EventCodec =
+pub static TRANSFER_TO_NAMADA_CODEC: DynEventCodec =
     &::std::marker::PhantomData::<TransferToNamadaFilter>;
 impl TryFrom<Events> for TransferToNamadaFilter {
     type Error = ();
@@ -95,8 +97,7 @@ impl EventCodec for ::std::marker::PhantomData<TransferToNamadaFilter> {
     }
 }
 #[doc = "Event codec for [`NewContractFilter`]."]
-pub const NEW_CONTRACT_CODEC: &'static dyn EventCodec =
-    &::std::marker::PhantomData::<NewContractFilter>;
+pub static NEW_CONTRACT_CODEC: DynEventCodec = &::std::marker::PhantomData::<NewContractFilter>;
 impl TryFrom<Events> for NewContractFilter {
     type Error = ();
     fn try_from(ev: Events) -> Result<Self, ()> {
@@ -137,7 +138,7 @@ impl EventCodec for ::std::marker::PhantomData<NewContractFilter> {
     }
 }
 #[doc = "Event codec for [`UpdateBridgeWhitelistFilter`]."]
-pub const UPDATE_BRIDGE_WHITELIST_CODEC: &'static dyn EventCodec =
+pub static UPDATE_BRIDGE_WHITELIST_CODEC: DynEventCodec =
     &::std::marker::PhantomData::<UpdateBridgeWhitelistFilter>;
 impl TryFrom<Events> for UpdateBridgeWhitelistFilter {
     type Error = ();
@@ -179,7 +180,7 @@ impl EventCodec for ::std::marker::PhantomData<UpdateBridgeWhitelistFilter> {
     }
 }
 #[doc = "Event codec for [`UpgradedContractFilter`]."]
-pub const UPGRADED_CONTRACT_CODEC: &'static dyn EventCodec =
+pub static UPGRADED_CONTRACT_CODEC: DynEventCodec =
     &::std::marker::PhantomData::<UpgradedContractFilter>;
 impl TryFrom<Events> for UpgradedContractFilter {
     type Error = ();
@@ -221,7 +222,7 @@ impl EventCodec for ::std::marker::PhantomData<UpgradedContractFilter> {
     }
 }
 #[doc = "Event codec for [`ValidatorSetUpdateFilter`]."]
-pub const VALIDATOR_SET_UPDATE_CODEC: &'static dyn EventCodec =
+pub static VALIDATOR_SET_UPDATE_CODEC: DynEventCodec =
     &::std::marker::PhantomData::<ValidatorSetUpdateFilter>;
 impl TryFrom<Events> for ValidatorSetUpdateFilter {
     type Error = ();
@@ -263,8 +264,8 @@ impl EventCodec for ::std::marker::PhantomData<ValidatorSetUpdateFilter> {
     }
 }
 #[doc = r"Return all Ethereum event codecs."]
-pub fn event_codecs() -> &'static [&'static dyn EventCodec] {
-    &[
+pub fn event_codecs() -> [DynEventCodec; 6usize] {
+    [
         TRANSFER_TO_ERC_CODEC,
         TRANSFER_TO_NAMADA_CODEC,
         NEW_CONTRACT_CODEC,
