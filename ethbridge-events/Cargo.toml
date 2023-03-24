@@ -19,4 +19,4 @@ version = "1.10.0"
 [package]
 edition = "2021"
 name = "ethbridge-events"
-version = "0.15.1"
+version = "0.15.2"

@@ -14,6 +14,15 @@ pub trait EventCodec {
     #[doc = r"Decode an Ethereum event."]
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError>;
 }
+impl TryFrom<Events> for TransferToErcFilter {
+    type Error = ();
+    fn try_from(ev: Events) -> Result<Self, ()> {
+        match ev {
+            Events::Bridge(BridgeEvents::TransferToErcFilter(ev)) => Ok(ev),
+            _ => Err(()),
+        }
+    }
+}
 impl EventCodec for ::std::marker::PhantomData<TransferToErcFilter> {
     fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
         TransferToErcFilter::abi_signature()
@@ -42,6 +51,15 @@ impl EventCodec for ::std::marker::PhantomData<TransferToErcFilter> {
         Ok(Events::Bridge(BridgeEvents::TransferToErcFilter(event)))
     }
 }
+impl TryFrom<Events> for TransferToNamadaFilter {
+    type Error = ();
+    fn try_from(ev: Events) -> Result<Self, ()> {
+        match ev {
+            Events::Bridge(BridgeEvents::TransferToNamadaFilter(ev)) => Ok(ev),
+            _ => Err(()),
+        }
+    }
+}
 impl EventCodec for ::std::marker::PhantomData<TransferToNamadaFilter> {
     fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
         TransferToNamadaFilter::abi_signature()
@@ -68,6 +86,15 @@ impl EventCodec for ::std::marker::PhantomData<TransferToNamadaFilter> {
         };
         let event = TransferToNamadaFilter::decode(encoded_event)?;
         Ok(Events::Bridge(BridgeEvents::TransferToNamadaFilter(event)))
+    }
+}
+impl TryFrom<Events> for NewContractFilter {
+    type Error = ();
+    fn try_from(ev: Events) -> Result<Self, ()> {
+        match ev {
+            Events::Governance(GovernanceEvents::NewContractFilter(ev)) => Ok(ev),
+            _ => Err(()),
+        }
     }
 }
 impl EventCodec for ::std::marker::PhantomData<NewContractFilter> {
@@ -100,6 +127,15 @@ impl EventCodec for ::std::marker::PhantomData<NewContractFilter> {
         )))
     }
 }
+impl TryFrom<Events> for UpdateBridgeWhitelistFilter {
+    type Error = ();
+    fn try_from(ev: Events) -> Result<Self, ()> {
+        match ev {
+            Events::Governance(GovernanceEvents::UpdateBridgeWhitelistFilter(ev)) => Ok(ev),
+            _ => Err(()),
+        }
+    }
+}
 impl EventCodec for ::std::marker::PhantomData<UpdateBridgeWhitelistFilter> {
     fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
         UpdateBridgeWhitelistFilter::abi_signature()
@@ -130,6 +166,15 @@ impl EventCodec for ::std::marker::PhantomData<UpdateBridgeWhitelistFilter> {
         ))
     }
 }
+impl TryFrom<Events> for UpgradedContractFilter {
+    type Error = ();
+    fn try_from(ev: Events) -> Result<Self, ()> {
+        match ev {
+            Events::Governance(GovernanceEvents::UpgradedContractFilter(ev)) => Ok(ev),
+            _ => Err(()),
+        }
+    }
+}
 impl EventCodec for ::std::marker::PhantomData<UpgradedContractFilter> {
     fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
         UpgradedContractFilter::abi_signature()
@@ -158,6 +203,15 @@ impl EventCodec for ::std::marker::PhantomData<UpgradedContractFilter> {
         Ok(Events::Governance(
             GovernanceEvents::UpgradedContractFilter(event),
         ))
+    }
+}
+impl TryFrom<Events> for ValidatorSetUpdateFilter {
+    type Error = ();
+    fn try_from(ev: Events) -> Result<Self, ()> {
+        match ev {
+            Events::Governance(GovernanceEvents::ValidatorSetUpdateFilter(ev)) => Ok(ev),
+            _ => Err(()),
+        }
     }
 }
 impl EventCodec for ::std::marker::PhantomData<ValidatorSetUpdateFilter> {
