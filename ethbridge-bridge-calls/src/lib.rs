@@ -79,6 +79,19 @@ pub struct NextValidatorSetHashCall;
 pub struct TransferToErcCall {
     pub relay_proof: RelayProof,
 }
+#[doc = "Container type for all input parameters for the `transferToErc20Nonce` function with signature `transferToErc20Nonce()` and selector `0x5f9fd577`"]
+#[derive(
+    Clone,
+    :: ethers_contract :: EthCall,
+    :: ethers_contract :: EthDisplay,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+#[ethcall(name = "transferToErc20Nonce", abi = "transferToErc20Nonce()")]
+pub struct TransferToErc20NonceCall;
 #[doc = "Container type for all input parameters for the `transferToNamada` function with signature `transferToNamada((address,uint256,string)[],uint256)` and selector `0x072e77cb`"]
 #[derive(
     Clone,
@@ -98,6 +111,19 @@ pub struct TransferToNamadaCall {
     pub transfers: ::std::vec::Vec<NamadaTransfer>,
     pub confirmations: ::ethers::core::types::U256,
 }
+#[doc = "Container type for all input parameters for the `transferToNamadaNonce` function with signature `transferToNamadaNonce()` and selector `0xc2d0a82b`"]
+#[derive(
+    Clone,
+    :: ethers_contract :: EthCall,
+    :: ethers_contract :: EthDisplay,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+#[ethcall(name = "transferToNamadaNonce", abi = "transferToNamadaNonce()")]
+pub struct TransferToNamadaNonceCall;
 #[doc = "Container type for all input parameters for the `updateTokenWhitelist` function with signature `updateTokenWhitelist(address[],uint256[])` and selector `0x6980dd15`"]
 #[derive(
     Clone,
@@ -143,7 +169,9 @@ pub enum BridgeCalls {
     GetWhitelistAmountFor(GetWhitelistAmountForCall),
     NextValidatorSetHash(NextValidatorSetHashCall),
     TransferToErc(TransferToErcCall),
+    TransferToErc20Nonce(TransferToErc20NonceCall),
     TransferToNamada(TransferToNamadaCall),
+    TransferToNamadaNonce(TransferToNamadaNonceCall),
     UpdateTokenWhitelist(UpdateTokenWhitelistCall),
     UpdateValidatorSetHash(UpdateValidatorSetHashCall),
 }
@@ -173,9 +201,19 @@ impl ::ethers::core::abi::AbiDecode for BridgeCalls {
         if let Ok(decoded) = <TransferToErcCall as ::ethers::core::abi::AbiDecode>::decode(data) {
             return Ok(Self::TransferToErc(decoded));
         }
+        if let Ok(decoded) =
+            <TransferToErc20NonceCall as ::ethers::core::abi::AbiDecode>::decode(data)
+        {
+            return Ok(Self::TransferToErc20Nonce(decoded));
+        }
         if let Ok(decoded) = <TransferToNamadaCall as ::ethers::core::abi::AbiDecode>::decode(data)
         {
             return Ok(Self::TransferToNamada(decoded));
+        }
+        if let Ok(decoded) =
+            <TransferToNamadaNonceCall as ::ethers::core::abi::AbiDecode>::decode(data)
+        {
+            return Ok(Self::TransferToNamadaNonce(decoded));
         }
         if let Ok(decoded) =
             <UpdateTokenWhitelistCall as ::ethers::core::abi::AbiDecode>::decode(data)
@@ -200,7 +238,9 @@ impl ::ethers::core::abi::AbiEncode for BridgeCalls {
             Self::GetWhitelistAmountFor(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::NextValidatorSetHash(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::TransferToErc(element) => ::ethers::core::abi::AbiEncode::encode(element),
+            Self::TransferToErc20Nonce(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::TransferToNamada(element) => ::ethers::core::abi::AbiEncode::encode(element),
+            Self::TransferToNamadaNonce(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::UpdateTokenWhitelist(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::UpdateValidatorSetHash(element) => {
                 ::ethers::core::abi::AbiEncode::encode(element)
@@ -216,7 +256,9 @@ impl ::core::fmt::Display for BridgeCalls {
             Self::GetWhitelistAmountFor(element) => ::core::fmt::Display::fmt(element, f),
             Self::NextValidatorSetHash(element) => ::core::fmt::Display::fmt(element, f),
             Self::TransferToErc(element) => ::core::fmt::Display::fmt(element, f),
+            Self::TransferToErc20Nonce(element) => ::core::fmt::Display::fmt(element, f),
             Self::TransferToNamada(element) => ::core::fmt::Display::fmt(element, f),
+            Self::TransferToNamadaNonce(element) => ::core::fmt::Display::fmt(element, f),
             Self::UpdateTokenWhitelist(element) => ::core::fmt::Display::fmt(element, f),
             Self::UpdateValidatorSetHash(element) => ::core::fmt::Display::fmt(element, f),
         }
@@ -247,9 +289,19 @@ impl ::core::convert::From<TransferToErcCall> for BridgeCalls {
         Self::TransferToErc(value)
     }
 }
+impl ::core::convert::From<TransferToErc20NonceCall> for BridgeCalls {
+    fn from(value: TransferToErc20NonceCall) -> Self {
+        Self::TransferToErc20Nonce(value)
+    }
+}
 impl ::core::convert::From<TransferToNamadaCall> for BridgeCalls {
     fn from(value: TransferToNamadaCall) -> Self {
         Self::TransferToNamada(value)
+    }
+}
+impl ::core::convert::From<TransferToNamadaNonceCall> for BridgeCalls {
+    fn from(value: TransferToNamadaNonceCall) -> Self {
+        Self::TransferToNamadaNonce(value)
     }
 }
 impl ::core::convert::From<UpdateTokenWhitelistCall> for BridgeCalls {
@@ -310,3 +362,27 @@ pub struct GetWhitelistAmountForReturn(pub ::ethers::core::types::U256);
     Hash,
 )]
 pub struct NextValidatorSetHashReturn(pub [u8; 32]);
+#[doc = "Container type for all return fields from the `transferToErc20Nonce` function with signature `transferToErc20Nonce()` and selector `0x5f9fd577`"]
+#[derive(
+    Clone,
+    :: ethers_contract :: EthAbiType,
+    :: ethers_contract :: EthAbiCodec,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub struct TransferToErc20NonceReturn(pub ::ethers::core::types::U256);
+#[doc = "Container type for all return fields from the `transferToNamadaNonce` function with signature `transferToNamadaNonce()` and selector `0xc2d0a82b`"]
+#[derive(
+    Clone,
+    :: ethers_contract :: EthAbiType,
+    :: ethers_contract :: EthAbiCodec,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub struct TransferToNamadaNonceReturn(pub ::ethers::core::types::U256);
