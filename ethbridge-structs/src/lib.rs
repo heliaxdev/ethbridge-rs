@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
-#[doc = "`Erc20Transfer(address,address,uint256,string,uint256,string)`"]
+#[doc = "`Erc20Transfer(uint8,address,address,uint256,string,uint256,string)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct Erc20Transfer {
+    pub kind: u8,
     pub from: ::ethabi::ethereum_types::Address,
     pub to: ::ethabi::ethereum_types::Address,
     pub amount: ::ethabi::ethereum_types::U256,
@@ -22,7 +23,7 @@ pub struct NamadaTransfer {
 }
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiType))]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
-#[doc = "`RelayProof((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string)`"]
+#[doc = "`RelayProof((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(uint8,address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string)`"]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub struct RelayProof {
     pub validator_set_args: ValidatorSetArgs,

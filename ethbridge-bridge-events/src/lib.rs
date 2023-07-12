@@ -7,7 +7,7 @@ use ::ethbridge_structs::*;
     feature = "ethers-derive",
     ethevent(
         name = "TransferToErc",
-        abi = "TransferToErc(uint256,(address,address,uint256,string,uint256,string)[],bool[],string)"
+        abi = "TransferToErc(uint256,(uint8,address,address,uint256,string,uint256,string)[],bool[],string)"
     )
 )]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
