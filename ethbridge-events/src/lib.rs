@@ -137,48 +137,6 @@ impl EventCodec for ::std::marker::PhantomData<NewContractFilter> {
         )))
     }
 }
-#[doc = "Event codec for [`UpdateBridgeWhitelistFilter`]."]
-pub static UPDATE_BRIDGE_WHITELIST_CODEC: DynEventCodec =
-    &::std::marker::PhantomData::<UpdateBridgeWhitelistFilter>;
-impl TryFrom<Events> for UpdateBridgeWhitelistFilter {
-    type Error = ();
-    fn try_from(ev: Events) -> Result<Self, ()> {
-        match ev {
-            Events::Governance(GovernanceEvents::UpdateBridgeWhitelistFilter(ev)) => Ok(ev),
-            _ => Err(()),
-        }
-    }
-}
-impl EventCodec for ::std::marker::PhantomData<UpdateBridgeWhitelistFilter> {
-    fn event_signature(&self) -> ::std::borrow::Cow<'static, str> {
-        UpdateBridgeWhitelistFilter::abi_signature()
-    }
-    fn kind(&self) -> EventKind {
-        EventKind::Governance
-    }
-    fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError> {
-        let encoded_event = {
-            let buf_len = if !log.topics.is_empty() {
-                log.data.len() + (log.topics.len() - 1) * 32
-            } else {
-                log.data.len()
-            };
-            let mut buf: SmallVec<[u8; 1024]> = smallvec ! [0 ; buf_len];
-            let mut ptr = 0;
-            for topic in log.topics.iter().skip(1) {
-                let end = ptr + 32;
-                buf[ptr..end].copy_from_slice(&topic.0[..]);
-                ptr = end;
-            }
-            buf[ptr..].copy_from_slice(&log.data[..]);
-            buf
-        };
-        let event = UpdateBridgeWhitelistFilter::decode(encoded_event)?;
-        Ok(Events::Governance(
-            GovernanceEvents::UpdateBridgeWhitelistFilter(event),
-        ))
-    }
-}
 #[doc = "Event codec for [`UpgradedContractFilter`]."]
 pub static UPGRADED_CONTRACT_CODEC: DynEventCodec =
     &::std::marker::PhantomData::<UpgradedContractFilter>;
@@ -264,12 +222,11 @@ impl EventCodec for ::std::marker::PhantomData<ValidatorSetUpdateFilter> {
     }
 }
 #[doc = r"Return all Ethereum event codecs."]
-pub fn event_codecs() -> [DynEventCodec; 6usize] {
+pub fn event_codecs() -> [DynEventCodec; 5usize] {
     [
         TRANSFER_TO_ERC_CODEC,
         TRANSFER_TO_NAMADA_CODEC,
         NEW_CONTRACT_CODEC,
-        UPDATE_BRIDGE_WHITELIST_CODEC,
         UPGRADED_CONTRACT_CODEC,
         VALIDATOR_SET_UPDATE_CODEC,
     ]

@@ -18,23 +18,6 @@ pub struct NewContractFilter {
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
 #[cfg_attr(
     feature = "ethers-derive",
-    ethevent(
-        name = "UpdateBridgeWhitelist",
-        abi = "UpdateBridgeWhitelist(uint256,address[],uint256[])"
-    )
-)]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
-#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
-pub struct UpdateBridgeWhitelistFilter {
-    #[cfg_attr(feature = "ethers-derive", ethevent(indexed))]
-    pub nonce: ::ethabi::ethereum_types::U256,
-    pub tokens: ::std::vec::Vec<::ethabi::ethereum_types::Address>,
-    pub token_cap: ::std::vec::Vec<::ethabi::ethereum_types::U256>,
-}
-#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthEvent))]
-#[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthDisplay))]
-#[cfg_attr(
-    feature = "ethers-derive",
     ethevent(name = "UpgradedContract", abi = "UpgradedContract(string,address)")
 )]
 #[cfg_attr(feature = "ethers-derive", derive(::ethers_contract::EthAbiCodec))]
@@ -66,7 +49,6 @@ pub struct ValidatorSetUpdateFilter {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum GovernanceEvents {
     NewContractFilter(NewContractFilter),
-    UpdateBridgeWhitelistFilter(UpdateBridgeWhitelistFilter),
     UpgradedContractFilter(UpgradedContractFilter),
     ValidatorSetUpdateFilter(ValidatorSetUpdateFilter),
 }
@@ -77,9 +59,6 @@ impl ::ethers_contract::EthLogDecode for GovernanceEvents {
     ) -> ::core::result::Result<Self, ::ethers::core::abi::Error> {
         if let Ok(decoded) = NewContractFilter::decode_log(log) {
             return Ok(GovernanceEvents::NewContractFilter(decoded));
-        }
-        if let Ok(decoded) = UpdateBridgeWhitelistFilter::decode_log(log) {
-            return Ok(GovernanceEvents::UpdateBridgeWhitelistFilter(decoded));
         }
         if let Ok(decoded) = UpgradedContractFilter::decode_log(log) {
             return Ok(GovernanceEvents::UpgradedContractFilter(decoded));
@@ -95,7 +74,6 @@ impl ::core::fmt::Display for GovernanceEvents {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         match self {
             Self::NewContractFilter(element) => ::core::fmt::Display::fmt(element, f),
-            Self::UpdateBridgeWhitelistFilter(element) => ::core::fmt::Display::fmt(element, f),
             Self::UpgradedContractFilter(element) => ::core::fmt::Display::fmt(element, f),
             Self::ValidatorSetUpdateFilter(element) => ::core::fmt::Display::fmt(element, f),
         }
@@ -104,11 +82,6 @@ impl ::core::fmt::Display for GovernanceEvents {
 impl ::core::convert::From<NewContractFilter> for GovernanceEvents {
     fn from(value: NewContractFilter) -> Self {
         Self::NewContractFilter(value)
-    }
-}
-impl ::core::convert::From<UpdateBridgeWhitelistFilter> for GovernanceEvents {
-    fn from(value: UpdateBridgeWhitelistFilter) -> Self {
-        Self::UpdateBridgeWhitelistFilter(value)
     }
 }
 impl ::core::convert::From<UpgradedContractFilter> for GovernanceEvents {
