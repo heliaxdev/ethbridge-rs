@@ -21,7 +21,7 @@ pub struct AddContractCall {
     pub name: ::std::string::String,
     pub address: ::ethers::core::types::Address,
 }
-#[doc = "Container type for all input parameters for the `updateBridgeWhitelist` function with signature `updateBridgeWhitelist((address[],uint256[],uint256),address[],uint256[],(bytes32,bytes32,uint8)[])` and selector `0x9d8dcf32`"]
+#[doc = "Container type for all input parameters for the `currentValidatorSetHash` function with signature `currentValidatorSetHash()` and selector `0xf896f1a5`"]
 #[derive(
     Clone,
     :: ethers_contract :: EthCall,
@@ -32,16 +32,21 @@ pub struct AddContractCall {
     Eq,
     Hash,
 )]
-#[ethcall(
-    name = "updateBridgeWhitelist",
-    abi = "updateBridgeWhitelist((address[],uint256[],uint256),address[],uint256[],(bytes32,bytes32,uint8)[])"
+#[ethcall(name = "currentValidatorSetHash", abi = "currentValidatorSetHash()")]
+pub struct CurrentValidatorSetHashCall;
+#[doc = "Container type for all input parameters for the `nextValidatorSetHash` function with signature `nextValidatorSetHash()` and selector `0x752d3b89`"]
+#[derive(
+    Clone,
+    :: ethers_contract :: EthCall,
+    :: ethers_contract :: EthDisplay,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
 )]
-pub struct UpdateBridgeWhitelistCall {
-    pub current_validator_set_args: ValidatorSetArgs,
-    pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
-    pub tokens_cap: ::std::vec::Vec<::ethers::core::types::U256>,
-    pub signatures: ::std::vec::Vec<Signature>,
-}
+#[ethcall(name = "nextValidatorSetHash", abi = "nextValidatorSetHash()")]
+pub struct NextValidatorSetHashCall;
 #[doc = "Container type for all input parameters for the `updateValidatorsSet` function with signature `updateValidatorsSet((address[],uint256[],uint256),bytes32,bytes32,(bytes32,bytes32,uint8)[],uint256)` and selector `0x06d66449`"]
 #[derive(
     Clone,
@@ -105,19 +110,6 @@ pub struct UpgradeContractCall {
     pub name: ::std::string::String,
     pub address: ::ethers::core::types::Address,
 }
-#[doc = "Container type for all input parameters for the `validatorSetHash` function with signature `validatorSetHash()` and selector `0xcdea2912`"]
-#[derive(
-    Clone,
-    :: ethers_contract :: EthCall,
-    :: ethers_contract :: EthDisplay,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-)]
-#[ethcall(name = "validatorSetHash", abi = "validatorSetHash()")]
-pub struct ValidatorSetHashCall;
 #[doc = "Container type for all input parameters for the `validatorSetNonce` function with signature `validatorSetNonce()` and selector `0x486f2e46`"]
 #[derive(
     Clone,
@@ -131,30 +123,16 @@ pub struct ValidatorSetHashCall;
 )]
 #[ethcall(name = "validatorSetNonce", abi = "validatorSetNonce()")]
 pub struct ValidatorSetNonceCall;
-#[doc = "Container type for all input parameters for the `whitelistNonce` function with signature `whitelistNonce()` and selector `0xb5c3030b`"]
-#[derive(
-    Clone,
-    :: ethers_contract :: EthCall,
-    :: ethers_contract :: EthDisplay,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-)]
-#[ethcall(name = "whitelistNonce", abi = "whitelistNonce()")]
-pub struct WhitelistNonceCall;
 #[doc = "Container type for all of the contract's call "]
 #[derive(Clone, :: ethers_contract :: EthAbiType, Debug, PartialEq, Eq, Hash)]
 pub enum GovernanceCalls {
     AddContract(AddContractCall),
-    UpdateBridgeWhitelist(UpdateBridgeWhitelistCall),
+    CurrentValidatorSetHash(CurrentValidatorSetHashCall),
+    NextValidatorSetHash(NextValidatorSetHashCall),
     UpdateValidatorsSet(UpdateValidatorsSetCall),
     UpgradeBridgeContract(UpgradeBridgeContractCall),
     UpgradeContract(UpgradeContractCall),
-    ValidatorSetHash(ValidatorSetHashCall),
     ValidatorSetNonce(ValidatorSetNonceCall),
-    WhitelistNonce(WhitelistNonceCall),
 }
 impl ::ethers::core::abi::AbiDecode for GovernanceCalls {
     fn decode(
@@ -165,9 +143,14 @@ impl ::ethers::core::abi::AbiDecode for GovernanceCalls {
             return Ok(Self::AddContract(decoded));
         }
         if let Ok(decoded) =
-            <UpdateBridgeWhitelistCall as ::ethers::core::abi::AbiDecode>::decode(data)
+            <CurrentValidatorSetHashCall as ::ethers::core::abi::AbiDecode>::decode(data)
         {
-            return Ok(Self::UpdateBridgeWhitelist(decoded));
+            return Ok(Self::CurrentValidatorSetHash(decoded));
+        }
+        if let Ok(decoded) =
+            <NextValidatorSetHashCall as ::ethers::core::abi::AbiDecode>::decode(data)
+        {
+            return Ok(Self::NextValidatorSetHash(decoded));
         }
         if let Ok(decoded) =
             <UpdateValidatorsSetCall as ::ethers::core::abi::AbiDecode>::decode(data)
@@ -182,16 +165,9 @@ impl ::ethers::core::abi::AbiDecode for GovernanceCalls {
         if let Ok(decoded) = <UpgradeContractCall as ::ethers::core::abi::AbiDecode>::decode(data) {
             return Ok(Self::UpgradeContract(decoded));
         }
-        if let Ok(decoded) = <ValidatorSetHashCall as ::ethers::core::abi::AbiDecode>::decode(data)
-        {
-            return Ok(Self::ValidatorSetHash(decoded));
-        }
         if let Ok(decoded) = <ValidatorSetNonceCall as ::ethers::core::abi::AbiDecode>::decode(data)
         {
             return Ok(Self::ValidatorSetNonce(decoded));
-        }
-        if let Ok(decoded) = <WhitelistNonceCall as ::ethers::core::abi::AbiDecode>::decode(data) {
-            return Ok(Self::WhitelistNonce(decoded));
         }
         Err(::ethers::core::abi::Error::InvalidData.into())
     }
@@ -200,13 +176,14 @@ impl ::ethers::core::abi::AbiEncode for GovernanceCalls {
     fn encode(self) -> Vec<u8> {
         match self {
             Self::AddContract(element) => ::ethers::core::abi::AbiEncode::encode(element),
-            Self::UpdateBridgeWhitelist(element) => ::ethers::core::abi::AbiEncode::encode(element),
+            Self::CurrentValidatorSetHash(element) => {
+                ::ethers::core::abi::AbiEncode::encode(element)
+            }
+            Self::NextValidatorSetHash(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::UpdateValidatorsSet(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::UpgradeBridgeContract(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::UpgradeContract(element) => ::ethers::core::abi::AbiEncode::encode(element),
-            Self::ValidatorSetHash(element) => ::ethers::core::abi::AbiEncode::encode(element),
             Self::ValidatorSetNonce(element) => ::ethers::core::abi::AbiEncode::encode(element),
-            Self::WhitelistNonce(element) => ::ethers::core::abi::AbiEncode::encode(element),
         }
     }
 }
@@ -214,13 +191,12 @@ impl ::core::fmt::Display for GovernanceCalls {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         match self {
             Self::AddContract(element) => ::core::fmt::Display::fmt(element, f),
-            Self::UpdateBridgeWhitelist(element) => ::core::fmt::Display::fmt(element, f),
+            Self::CurrentValidatorSetHash(element) => ::core::fmt::Display::fmt(element, f),
+            Self::NextValidatorSetHash(element) => ::core::fmt::Display::fmt(element, f),
             Self::UpdateValidatorsSet(element) => ::core::fmt::Display::fmt(element, f),
             Self::UpgradeBridgeContract(element) => ::core::fmt::Display::fmt(element, f),
             Self::UpgradeContract(element) => ::core::fmt::Display::fmt(element, f),
-            Self::ValidatorSetHash(element) => ::core::fmt::Display::fmt(element, f),
             Self::ValidatorSetNonce(element) => ::core::fmt::Display::fmt(element, f),
-            Self::WhitelistNonce(element) => ::core::fmt::Display::fmt(element, f),
         }
     }
 }
@@ -229,9 +205,14 @@ impl ::core::convert::From<AddContractCall> for GovernanceCalls {
         Self::AddContract(value)
     }
 }
-impl ::core::convert::From<UpdateBridgeWhitelistCall> for GovernanceCalls {
-    fn from(value: UpdateBridgeWhitelistCall) -> Self {
-        Self::UpdateBridgeWhitelist(value)
+impl ::core::convert::From<CurrentValidatorSetHashCall> for GovernanceCalls {
+    fn from(value: CurrentValidatorSetHashCall) -> Self {
+        Self::CurrentValidatorSetHash(value)
+    }
+}
+impl ::core::convert::From<NextValidatorSetHashCall> for GovernanceCalls {
+    fn from(value: NextValidatorSetHashCall) -> Self {
+        Self::NextValidatorSetHash(value)
     }
 }
 impl ::core::convert::From<UpdateValidatorsSetCall> for GovernanceCalls {
@@ -249,22 +230,12 @@ impl ::core::convert::From<UpgradeContractCall> for GovernanceCalls {
         Self::UpgradeContract(value)
     }
 }
-impl ::core::convert::From<ValidatorSetHashCall> for GovernanceCalls {
-    fn from(value: ValidatorSetHashCall) -> Self {
-        Self::ValidatorSetHash(value)
-    }
-}
 impl ::core::convert::From<ValidatorSetNonceCall> for GovernanceCalls {
     fn from(value: ValidatorSetNonceCall) -> Self {
         Self::ValidatorSetNonce(value)
     }
 }
-impl ::core::convert::From<WhitelistNonceCall> for GovernanceCalls {
-    fn from(value: WhitelistNonceCall) -> Self {
-        Self::WhitelistNonce(value)
-    }
-}
-#[doc = "Container type for all return fields from the `validatorSetHash` function with signature `validatorSetHash()` and selector `0xcdea2912`"]
+#[doc = "Container type for all return fields from the `currentValidatorSetHash` function with signature `currentValidatorSetHash()` and selector `0xf896f1a5`"]
 #[derive(
     Clone,
     :: ethers_contract :: EthAbiType,
@@ -275,7 +246,19 @@ impl ::core::convert::From<WhitelistNonceCall> for GovernanceCalls {
     Eq,
     Hash,
 )]
-pub struct ValidatorSetHashReturn(pub [u8; 32]);
+pub struct CurrentValidatorSetHashReturn(pub [u8; 32]);
+#[doc = "Container type for all return fields from the `nextValidatorSetHash` function with signature `nextValidatorSetHash()` and selector `0x752d3b89`"]
+#[derive(
+    Clone,
+    :: ethers_contract :: EthAbiType,
+    :: ethers_contract :: EthAbiCodec,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub struct NextValidatorSetHashReturn(pub [u8; 32]);
 #[doc = "Container type for all return fields from the `validatorSetNonce` function with signature `validatorSetNonce()` and selector `0x486f2e46`"]
 #[derive(
     Clone,
@@ -288,15 +271,3 @@ pub struct ValidatorSetHashReturn(pub [u8; 32]);
     Hash,
 )]
 pub struct ValidatorSetNonceReturn(pub ::ethers::core::types::U256);
-#[doc = "Container type for all return fields from the `whitelistNonce` function with signature `whitelistNonce()` and selector `0xb5c3030b`"]
-#[derive(
-    Clone,
-    :: ethers_contract :: EthAbiType,
-    :: ethers_contract :: EthAbiCodec,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-)]
-pub struct WhitelistNonceReturn(pub ::ethers::core::types::U256);
