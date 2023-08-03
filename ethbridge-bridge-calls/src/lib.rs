@@ -46,7 +46,7 @@ pub struct CurrentValidatorSetHashCall;
 )]
 #[ethcall(name = "nextValidatorSetHash", abi = "nextValidatorSetHash()")]
 pub struct NextValidatorSetHashCall;
-#[doc = "Container type for all input parameters for the `transferToErc` function with signature `transferToErc(((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(uint8,address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string))` and selector `0xb9094041`"]
+#[doc = "Container type for all input parameters for the `transferToErc` function with signature `transferToErc(((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,bytes32)[],bytes32,bytes32[],bool[],uint256,string))` and selector `0xa08821dc`"]
 #[derive(
     Clone,
     :: ethers_contract :: EthCall,
@@ -59,7 +59,7 @@ pub struct NextValidatorSetHashCall;
 )]
 #[ethcall(
     name = "transferToErc",
-    abi = "transferToErc(((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(uint8,address,address,uint256,string,uint256,string)[],bytes32,bytes32[],bool[],uint256,string))"
+    abi = "transferToErc(((address[],uint256[],uint256),(bytes32,bytes32,uint8)[],(address,address,uint256,bytes32)[],bytes32,bytes32[],bool[],uint256,string))"
 )]
 pub struct TransferToErcCall {
     pub relay_proof: RelayProof,
