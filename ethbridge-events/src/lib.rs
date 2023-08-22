@@ -4,7 +4,6 @@ use ::ethbridge_bridge_events::*;
 use ::ethbridge_governance_events::*;
 use ::ethers::abi::AbiDecode;
 use ::ethers::contract::{AbiError, EthEvent};
-use ::smallvec::{smallvec, SmallVec};
 #[doc = r"[`EventCodec`] as a static reference trait object."]
 pub type DynEventCodec = &'static (dyn EventCodec + Sync);
 #[doc = r"Codec to deserialize Ethereum events."]
@@ -36,23 +35,7 @@ impl EventCodec for ::std::marker::PhantomData<TransferToErcFilter> {
         EventKind::Bridge
     }
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError> {
-        let encoded_event = {
-            let buf_len = if !log.topics.is_empty() {
-                log.data.len() + (log.topics.len() - 1) * 32
-            } else {
-                log.data.len()
-            };
-            let mut buf: SmallVec<[u8; 1024]> = smallvec ! [0 ; buf_len];
-            let mut ptr = 0;
-            for topic in log.topics.iter().skip(1) {
-                let end = ptr + 32;
-                buf[ptr..end].copy_from_slice(&topic.0[..]);
-                ptr = end;
-            }
-            buf[ptr..].copy_from_slice(&log.data[..]);
-            buf
-        };
-        let event = TransferToErcFilter::decode(encoded_event)?;
+        let event = TransferToErcFilter::decode_log(log)?;
         Ok(Events::Bridge(BridgeEvents::TransferToErcFilter(event)))
     }
 }
@@ -76,23 +59,7 @@ impl EventCodec for ::std::marker::PhantomData<TransferToNamadaFilter> {
         EventKind::Bridge
     }
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError> {
-        let encoded_event = {
-            let buf_len = if !log.topics.is_empty() {
-                log.data.len() + (log.topics.len() - 1) * 32
-            } else {
-                log.data.len()
-            };
-            let mut buf: SmallVec<[u8; 1024]> = smallvec ! [0 ; buf_len];
-            let mut ptr = 0;
-            for topic in log.topics.iter().skip(1) {
-                let end = ptr + 32;
-                buf[ptr..end].copy_from_slice(&topic.0[..]);
-                ptr = end;
-            }
-            buf[ptr..].copy_from_slice(&log.data[..]);
-            buf
-        };
-        let event = TransferToNamadaFilter::decode(encoded_event)?;
+        let event = TransferToNamadaFilter::decode_log(log)?;
         Ok(Events::Bridge(BridgeEvents::TransferToNamadaFilter(event)))
     }
 }
@@ -115,23 +82,7 @@ impl EventCodec for ::std::marker::PhantomData<NewContractFilter> {
         EventKind::Governance
     }
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError> {
-        let encoded_event = {
-            let buf_len = if !log.topics.is_empty() {
-                log.data.len() + (log.topics.len() - 1) * 32
-            } else {
-                log.data.len()
-            };
-            let mut buf: SmallVec<[u8; 1024]> = smallvec ! [0 ; buf_len];
-            let mut ptr = 0;
-            for topic in log.topics.iter().skip(1) {
-                let end = ptr + 32;
-                buf[ptr..end].copy_from_slice(&topic.0[..]);
-                ptr = end;
-            }
-            buf[ptr..].copy_from_slice(&log.data[..]);
-            buf
-        };
-        let event = NewContractFilter::decode(encoded_event)?;
+        let event = NewContractFilter::decode_log(log)?;
         Ok(Events::Governance(GovernanceEvents::NewContractFilter(
             event,
         )))
@@ -157,23 +108,7 @@ impl EventCodec for ::std::marker::PhantomData<UpgradedContractFilter> {
         EventKind::Governance
     }
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError> {
-        let encoded_event = {
-            let buf_len = if !log.topics.is_empty() {
-                log.data.len() + (log.topics.len() - 1) * 32
-            } else {
-                log.data.len()
-            };
-            let mut buf: SmallVec<[u8; 1024]> = smallvec ! [0 ; buf_len];
-            let mut ptr = 0;
-            for topic in log.topics.iter().skip(1) {
-                let end = ptr + 32;
-                buf[ptr..end].copy_from_slice(&topic.0[..]);
-                ptr = end;
-            }
-            buf[ptr..].copy_from_slice(&log.data[..]);
-            buf
-        };
-        let event = UpgradedContractFilter::decode(encoded_event)?;
+        let event = UpgradedContractFilter::decode_log(log)?;
         Ok(Events::Governance(
             GovernanceEvents::UpgradedContractFilter(event),
         ))
@@ -199,23 +134,7 @@ impl EventCodec for ::std::marker::PhantomData<ValidatorSetUpdateFilter> {
         EventKind::Governance
     }
     fn decode(&self, log: &::ethers::abi::RawLog) -> Result<Events, AbiError> {
-        let encoded_event = {
-            let buf_len = if !log.topics.is_empty() {
-                log.data.len() + (log.topics.len() - 1) * 32
-            } else {
-                log.data.len()
-            };
-            let mut buf: SmallVec<[u8; 1024]> = smallvec ! [0 ; buf_len];
-            let mut ptr = 0;
-            for topic in log.topics.iter().skip(1) {
-                let end = ptr + 32;
-                buf[ptr..end].copy_from_slice(&topic.0[..]);
-                ptr = end;
-            }
-            buf[ptr..].copy_from_slice(&log.data[..]);
-            buf
-        };
-        let event = ValidatorSetUpdateFilter::decode(encoded_event)?;
+        let event = ValidatorSetUpdateFilter::decode_log(log)?;
         Ok(Events::Governance(
             GovernanceEvents::ValidatorSetUpdateFilter(event),
         ))

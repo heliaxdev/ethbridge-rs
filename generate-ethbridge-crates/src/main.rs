@@ -15,7 +15,6 @@ use self::templates::CargoTomlDepMeta;
 
 const ETHABI_VERSION: &str = "18.0.0";
 const ETHERS_VERSION: &str = "2.0.0";
-const SMALLVEC_VERSION: &str = "1.10.0";
 
 const FEATURE_GATE_ETHERS: &str = "ethers-derive";
 
@@ -163,14 +162,6 @@ fn generate_events_crate(
         crate_version,
         [
             (
-                "smallvec".into(),
-                CargoTomlDepMeta {
-                    version: SMALLVEC_VERSION.into(),
-                    optional: false,
-                    ..Default::default()
-                },
-            ),
-            (
                 "ethers".into(),
                 CargoTomlDepMeta {
                     version: ETHERS_VERSION.into(),
@@ -254,24 +245,7 @@ fn generate_events_crate(
                                 &self,
                                 log: &::ethers::abi::RawLog,
                             ) -> Result<Events, AbiError> {
-                                let encoded_event = {
-                                    let buf_len = if !log.topics.is_empty() {
-                                        log.data.len() + (log.topics.len() - 1) * 32
-                                    } else {
-                                        log.data.len()
-                                    };
-                                    let mut buf: SmallVec<[u8; 1024]> =
-                                        smallvec![0; buf_len];
-                                    let mut ptr = 0;
-                                    for topic in log.topics.iter().skip(1) {
-                                        let end = ptr + 32;
-                                        buf[ptr..end].copy_from_slice(&topic.0[..]);
-                                        ptr = end;
-                                    }
-                                    buf[ptr..].copy_from_slice(&log.data[..]);
-                                    buf
-                                };
-                                let event = #event_ident :: decode(encoded_event)?;
+                                let event = #event_ident :: decode_log(log)?;
                                 Ok(Events :: #kind (
                                     #kind_events :: #event_ident ( event )
                                 ))
@@ -296,7 +270,6 @@ fn generate_events_crate(
             use ::ethbridge_governance_events::*;
             use ::ethers::contract::{AbiError, EthEvent};
             use ::ethers::abi::AbiDecode;
-            use ::smallvec::{smallvec, SmallVec};
 
             ///[`EventCodec`] as a static reference trait object.
             pub type DynEventCodec = &'static (dyn EventCodec + Sync);

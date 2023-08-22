@@ -10,10 +10,6 @@ path = "../ethbridge-governance-events"
 optional = false
 version = "2.0.0"
 
-[dependencies.smallvec]
-optional = false
-version = "1.10.0"
-
 [features]
 
 [package]
