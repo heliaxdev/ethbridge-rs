@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "generate-ethbridge-crates",
+    "test-ethbridge-events",
     "ethbridge-*"
 ]

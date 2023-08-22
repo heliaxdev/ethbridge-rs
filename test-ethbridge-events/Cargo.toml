@@ -1,0 +1,10 @@
+[package]
+name = "test-ethbridge-events"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethabi = "18.0.0"
+ethbridge-bridge-events = { path = "../ethbridge-bridge-events" }
+ethbridge-events = { path = "../ethbridge-events" }
+ethers-contract = "2.0.0"
